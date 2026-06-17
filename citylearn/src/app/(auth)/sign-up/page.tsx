@@ -1,10 +1,109 @@
 // @ts-nocheck
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { CrowdCanvas } from "@/components/shared/CrowdCanvas";
 
+const countriesData = [
+  {
+    name: "United States",
+    states: [
+      { name: "California", cities: ["San Francisco", "Los Angeles", "San Diego", "San Jose"] },
+      { name: "New York", cities: ["New York City", "Buffalo", "Rochester"] },
+      { name: "Texas", cities: ["Houston", "Austin", "Dallas", "San Antonio"] },
+    ],
+  },
+  {
+    name: "Singapore",
+    states: [
+      { name: "Central Region", cities: ["Singapore"] },
+    ],
+  },
+  {
+    name: "Germany",
+    states: [
+      { name: "Bavaria", cities: ["Munich", "Nuremberg"] },
+      { name: "Berlin", cities: ["Berlin"] },
+      { name: "Hamburg", cities: ["Hamburg"] },
+    ],
+  },
+  {
+    name: "Japan",
+    states: [
+      { name: "Tokyo Prefecture", cities: ["Tokyo"] },
+      { name: "Osaka Prefecture", cities: ["Osaka"] },
+      { name: "Kyoto Prefecture", cities: ["Kyoto"] },
+    ],
+  },
+  {
+    name: "United Kingdom",
+    states: [
+      { name: "England", cities: ["London", "Manchester", "Birmingham"] },
+      { name: "Scotland", cities: ["Edinburgh", "Glasgow"] },
+    ],
+  },
+  {
+    name: "Canada",
+    states: [
+      { name: "Ontario", cities: ["Toronto", "Ottawa"] },
+      { name: "Quebec", cities: ["Montreal"] },
+      { name: "British Columbia", cities: ["Vancouver"] },
+    ],
+  },
+  {
+    name: "India",
+    states: [
+      { name: "Maharashtra", cities: ["Mumbai", "Pune"] },
+      { name: "Delhi", cities: ["New Delhi"] },
+      { name: "Karnataka", cities: ["Bangalore"] },
+    ],
+  },
+  {
+    name: "Australia",
+    states: [
+      { name: "New South Wales", cities: ["Sydney"] },
+      { name: "Victoria", cities: ["Melbourne"] },
+    ],
+  },
+];
+
 export default function Page() {
+  const [selectedCountry, setSelectedCountry] = useState(countriesData[0].name);
+  const [selectedState, setSelectedState] = useState(countriesData[0].states[0].name);
+  const [selectedCity, setSelectedCity] = useState(countriesData[0].states[0].cities[0]);
+
+  // Derived arrays
+  const currentCountryObj = countriesData.find((c) => c.name === selectedCountry) || countriesData[0];
+  const statesList = currentCountryObj.states;
+  const currentStateObj = statesList.find((s) => s.name === selectedState) || statesList[0] || { cities: [] };
+  const citiesList = currentStateObj.cities;
+
+  const handleCountryChange = (countryName: string) => {
+    setSelectedCountry(countryName);
+    const countryObj = countriesData.find((c) => c.name === countryName);
+    if (countryObj && countryObj.states.length > 0) {
+      const firstState = countryObj.states[0];
+      setSelectedState(firstState.name);
+      if (firstState.cities.length > 0) {
+        setSelectedCity(firstState.cities[0]);
+      } else {
+        setSelectedCity("");
+      }
+    } else {
+      setSelectedState("");
+      setSelectedCity("");
+    }
+  };
+
+  const handleStateChange = (stateName: string) => {
+    setSelectedState(stateName);
+    const stateObj = statesList.find((s) => s.name === stateName);
+    if (stateObj && stateObj.cities.length > 0) {
+      setSelectedCity(stateObj.cities[0]);
+    } else {
+      setSelectedCity("");
+    }
+  };
 
   useEffect(() => {
     const runScript = () => {
@@ -266,11 +365,16 @@ export default function Page() {
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Country</label>
                   <div className="relative">
-                    <select className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none">
-                      <option>United States</option>
-                      <option>Singapore</option>
-                      <option>Germany</option>
-                      <option>Japan</option>
+                    <select
+                      className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none"
+                      value={selectedCountry}
+                      onChange={(e) => handleCountryChange(e.target.value)}
+                    >
+                      {countriesData.map((country) => (
+                        <option key={country.name} value={country.name}>
+                          {country.name}
+                        </option>
+                      ))}
                     </select>
                     <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
                   </div>
@@ -280,10 +384,16 @@ export default function Page() {
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">State/Region</label>
                     <div className="relative">
-                      <select className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none">
-                        <option>California</option>
-                        <option>Bavaria</option>
-                        <option>Tokyo Prefecture</option>
+                      <select
+                        className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none"
+                        value={selectedState}
+                        onChange={(e) => handleStateChange(e.target.value)}
+                      >
+                        {statesList.map((state) => (
+                          <option key={state.name} value={state.name}>
+                            {state.name}
+                          </option>
+                        ))}
                       </select>
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
                     </div>
@@ -291,20 +401,22 @@ export default function Page() {
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Primary City</label>
                     <div className="relative">
-                      <select className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none">
-                        <option>San Francisco</option>
-                        <option>Munich</option>
-                        <option>Tokyo</option>
+                      <select
+                        className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none"
+                        value={selectedCity}
+                        onChange={(e) => setSelectedCity(e.target.value)}
+                      >
+                        {citiesList.map((city) => (
+                          <option key={city} value={city}>
+                            {city}
+                          </option>
+                        ))}
                       </select>
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Primary Zone / District</label>
-                  <input className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground transition-all focus:bg-white focus:border-primary" placeholder="e.g. North Sector 7" type="text" />
-                </div>
 
                 <div className="flex items-start gap-3 pt-2">
                   <input className="mt-1 w-4 h-4 rounded border-border text-primary focus:ring-primary/20 accent-primary" id="terms" type="checkbox" required />

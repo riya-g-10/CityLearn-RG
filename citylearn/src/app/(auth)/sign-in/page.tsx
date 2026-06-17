@@ -150,7 +150,7 @@ export default function Page() {
               {/* Register link inside the card */}
               <div className="mt-8 pt-6 border-t border-border text-center">
                 <p className="text-sm text-muted-foreground">
-                  New User? <a className="text-primary font-bold hover:underline" href="/sign-up">Register credentials</a>
+                  New User? <a className="text-primary font-bold hover:underline" href="/sign-up">Register Here</a>
                 </p>
               </div>
             </div>
