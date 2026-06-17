@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CityLearn Intelligence | Similar Events</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&amp;family=Space+Mono:wght@400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #47d6ff33;
+            box-shadow: 0 0 20px rgba(71, 214, 255, 0.1);
+        }
+        .glow-border {
+            position: relative;
+        }
+        .glow-border::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+            z-index: -1;
+            border-radius: inherit;
+        }
+        .neon-text-glow {
+            text-shadow: 0 0 10px rgba(71, 214, 255, 0.5);
+        }
+        @keyframes pulse-neural {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        .neural-dot {
+            animation: pulse-neural 2s infinite ease-in-out;
+        }
+        .radar-grid {
+            stroke: rgba(187, 201, 207, 0.2);
+            stroke-width: 1;
+        }
+        .radar-area {
+            fill: rgba(71, 214, 255, 0.2);
+            stroke: #47d6ff;
+            stroke-width: 2;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-tint": "#47d6ff",
+                      "on-secondary-fixed-variant": "#6e208c",
+                      "on-surface": "#e5e1e4",
+                      "on-tertiary": "#00391f",
+                      "surface-dim": "#131315",
+                      "surface-container-low": "#1c1b1d",
+                      "primary-fixed": "#b6ebff",
+                      "secondary": "#edb1ff",
+                      "primary": "#a5e7ff",
+                      "secondary-container": "#6e208c",
+                      "outline-variant": "#3c494e",
+                      "surface-container": "#201f21",
+                      "on-error": "#690005",
+                      "inverse-primary": "#00677f",
+                      "background": "#131315",
+                      "tertiary-fixed-dim": "#00e38b",
+                      "surface": "#131315",
+                      "outline": "#859399",
+                      "primary-container": "#00d2ff",
+                      "surface-bright": "#39393b",
+                      "on-background": "#e5e1e4",
+                      "on-primary-fixed-variant": "#004e60",
+                      "on-secondary": "#520070",
+                      "on-tertiary-fixed": "#002110",
+                      "tertiary-container": "#00dd87",
+                      "on-primary": "#003543",
+                      "secondary-fixed": "#f9d8ff",
+                      "on-secondary-container": "#e498ff",
+                      "error-container": "#93000a",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#edb1ff",
+                      "on-secondary-fixed": "#320046",
+                      "on-surface-variant": "#bbc9cf",
+                      "tertiary": "#00fd9b",
+                      "on-tertiary-fixed-variant": "#00522f",
+                      "on-tertiary-container": "#005b35",
+                      "surface-container-high": "#2a2a2c",
+                      "tertiary-fixed": "#56ffa8",
+                      "error": "#ffb4ab",
+                      "surface-variant": "#353437",
+                      "inverse-on-surface": "#313032",
+                      "on-primary-fixed": "#001f28",
+                      "on-primary-container": "#00566a",
+                      "surface-container-highest": "#353437",
+                      "inverse-surface": "#e5e1e4",
+                      "primary-fixed-dim": "#47d6ff",
+                      "surface-container-lowest": "#0e0e10"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "container-max": "1440px",
+                      "margin-desktop": "32px"
+              },
+              "fontFamily": {
+                      "body-md": ["Nunito Sans"],
+                      "label-caps": ["Space Mono"],
+                      "headline-lg": ["Nunito Sans"],
+                      "headline-lg-mobile": ["Nunito Sans"],
+                      "headline-md": ["Nunito Sans"],
+                      "body-lg": ["Nunito Sans"],
+                      "data-mono": ["Space Mono"],
+                      "headline-xl": ["Nunito Sans"]
+              },
+              "fontSize": {
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary/30 selection:text-primary overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 z-50 w-full bg-surface/10 backdrop-blur-3xl border-b border-white/10 px-spacing-margin-desktop h-16 flex justify-between items-center">
+<div class="flex items-center gap-6">
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">CityLearn Intelligence</h1>
+<div class="hidden md:flex relative group">
+<span class="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">search</span>
+</span>
+<input class="bg-white/5 border-none rounded-full pl-10 pr-4 py-1 text-sm focus:ring-1 focus:ring-primary w-64 transition-all" placeholder="Query historical memory..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+<div class="relative">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full neural-dot"></span>
+</div>
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full border border-primary/30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxqYDRpz6vOTphfYIqLfBSbuU9hhBz6JZWvmH2Es6TxL8k2edIg_j2vmoyBg69gvKBReBqe3tRYUwDhM7z6deVdTvXhCn9JacbhI-M5pehqblOVwXBUzEa7SsUA8OXAAK8QqsonvBcaxIINkgCgmyT-sZvqpZNIzZC3QMiFM-u8EnsHx3zD8rwu5Dl4C5dFDgsx49Fa4KvIUGZpp1Z-QRRFYfDoiujHjT_zIcguDIuygYNnRE8euMJfWIVIwfbVBCBfxTb5_9T9aI"/>
+</div>
+</header>
+<div class="flex min-h-screen pt-16">
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 h-[calc(100vh-64px)] w-64 bg-surface/15 backdrop-blur-2xl border-r border-white/10 flex flex-col py-8 overflow-y-auto hidden md:flex">
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-white/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-white/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Analysis</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-r-2 border-primary bg-white/5 scale-95 transition-all" href="#">
+<span class="material-symbols-outlined">compare_arrows</span>
+<span>Similar Events</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-white/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">online_prediction</span>
+<span>Predictions</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-white/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">recommend</span>
+<span>Recommendations</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-white/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+<span>Simulator</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-white/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">replay</span>
+<span>Replay</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-white/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">hub</span>
+<span>Knowledge Graph</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-body-md hover:bg-white/5 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span>Learning Loop</span>
+</a>
+</nav>
+<div class="px-8 mt-auto pt-8 border-t border-white/5">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 bg-tertiary rounded-full neural-dot"></div>
+<span class="text-xs font-label-caps text-tertiary">Neural Link Active</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 p-spacing-margin-mobile md:p-spacing-margin-desktop overflow-hidden">
+<!-- Page Header -->
+<div class="mb-8">
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2 py-0.5 bg-primary-container text-on-primary-container text-[10px] font-label-caps rounded">AI ANALYTICS</span>
+<span class="text-on-surface-variant font-label-caps text-[10px]">MATCH ENGINE v4.2</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">Historical Match Engine</h2>
+<p class="text-on-surface-variant font-body-md max-w-2xl">Retrieving spatial-temporal patterns from Institutional Memory. Current event: <span class="text-primary font-bold">Downtown Fleet Migration (ID: 99x-A)</span>.</p>
+</div>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Radar Chart Section -->
+<div class="col-span-12 lg:col-span-5 glass-card rounded-xl p-6 flex flex-col items-center justify-center min-h-[400px]">
+<h3 class="w-full text-left font-label-caps text-on-surface-variant mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">hub</span> Similarity Radar
+                    </h3>
+<div class="relative w-full h-64 flex items-center justify-center">
+<!-- Custom Radar Chart Visualization -->
+<svg class="w-full h-full max-w-[300px]" viewbox="0 0 200 200">
+<!-- Grid -->
+<circle class="radar-grid fill-none" cx="100" cy="100" r="80"></circle>
+<circle class="radar-grid fill-none" cx="100" cy="100" r="60"></circle>
+<circle class="radar-grid fill-none" cx="100" cy="100" r="40"></circle>
+<line class="radar-grid" x1="100" x2="100" y1="20" y2="180"></line>
+<line class="radar-grid" x1="20" x2="180" y1="100" y2="100"></line>
+<!-- Active Memory Shape -->
+<polygon class="radar-area" points="100,40 160,100 100,150 50,100"></polygon>
+<!-- Labels -->
+<text class="fill-on-surface-variant text-[8px] font-label-caps" text-anchor="middle" x="100" y="15">Density</text>
+<text class="fill-on-surface-variant text-[8px] font-label-caps" text-anchor="start" x="185" y="105">Speed</text>
+<text class="fill-on-surface-variant text-[8px] font-label-caps" text-anchor="middle" x="100" y="195">Risk</text>
+<text class="fill-on-surface-variant text-[8px] font-label-caps" text-anchor="end" x="15" y="105">Duration</text>
+</svg>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-4 w-full">
+<div class="bg-white/5 rounded p-3">
+<span class="block text-[10px] font-label-caps text-on-surface-variant">Master Match</span>
+<span class="text-primary font-bold text-lg">94.2%</span>
+</div>
+<div class="bg-white/5 rounded p-3">
+<span class="block text-[10px] font-label-caps text-on-surface-variant">Pattern Drift</span>
+<span class="text-tertiary font-bold text-lg">±2.4%</span>
+</div>
+</div>
+</div>
+<!-- Lessons Learned Expandable -->
+<div class="col-span-12 lg:col-span-7 glass-card rounded-xl p-6 overflow-hidden">
+<h3 class="font-label-caps text-on-surface-variant mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">psychology</span> Lessons Learned
+                    </h3>
+<div class="space-y-4">
+<!-- Expandable 1 -->
+<details class="group bg-white/5 rounded-lg overflow-hidden border border-white/5 hover:border-primary/20 transition-all" open="">
+<summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary">check_circle</span>
+<span class="font-bold">Protocol: Dynamic Rerouting Alpha</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="px-4 pb-4 text-sm text-on-surface-variant border-t border-white/5 pt-3">
+<p class="mb-2">Automated signal timing adjustments in Sector 7 successfully mitigated 85% of predicted bottlenecking during the 2023 Marathon event.</p>
+<div class="flex gap-2">
+<span class="bg-tertiary/10 text-tertiary text-[10px] font-label-caps px-2 py-0.5 rounded">Retain Strategy</span>
+<span class="bg-white/5 text-on-surface-variant text-[10px] font-label-caps px-2 py-0.5 rounded">High Confidence</span>
+</div>
+</div>
+</details>
+<!-- Expandable 2 -->
+<details class="group bg-white/5 rounded-lg overflow-hidden border border-white/5 hover:border-error/20 transition-all">
+<summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error">cancel</span>
+<span class="font-bold">Protocol: Static Perimeter Lock</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="px-4 pb-4 text-sm text-on-surface-variant border-t border-white/5 pt-3">
+<p class="mb-2">The 'Stadium Opening' event proved that hard perimeters lead to secondary congestion points. Neural drift suggests adaptive zones instead.</p>
+<div class="flex gap-2">
+<span class="bg-error/10 text-error text-[10px] font-label-caps px-2 py-0.5 rounded">Deprecate</span>
+<span class="bg-white/5 text-on-surface-variant text-[10px] font-label-caps px-2 py-0.5 rounded">Root Cause Identified</span>
+</div>
+</div>
+</details>
+<!-- Expandable 3 -->
+<details class="group bg-white/5 rounded-lg overflow-hidden border border-white/5 hover:border-secondary/20 transition-all">
+<summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">info</span>
+<span class="font-bold">Citizen Messaging Latency</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="px-4 pb-4 text-sm text-on-surface-variant border-t border-white/5 pt-3">
+<p class="mb-2">Manual notification approval delays response time. Recommend switching to AI-driven situational broadcasts.</p>
+<div class="flex gap-2">
+<span class="bg-secondary/10 text-secondary text-[10px] font-label-caps px-2 py-0.5 rounded">Iterate</span>
+<span class="bg-white/5 text-on-surface-variant text-[10px] font-label-caps px-2 py-0.5 rounded">Automation Potential</span>
+</div>
+</div>
+</details>
+</div>
+</div>
+<!-- Top Historical Matches Grid -->
+<div class="col-span-12 mt-8">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-label-caps text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">history</span> Top Historical Matches
+                        </h3>
+<div class="flex gap-2">
+<button class="bg-white/5 hover:bg-white/10 p-2 rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+</button>
+<button class="bg-white/5 hover:bg-white/10 p-2 rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]">sort</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Match Card 1 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group">
+<div class="relative h-40 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A cinematic low angle shot of a city marathon at dawn. Thousands of runners fill a wide urban boulevard between glowing glass skyscrapers. The morning light is cool and blue with golden sun rays piercing through the architecture. High contrast, professional urban photography style with a futuristic city vibe." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnxR0ccKBqqHeNPLE5PRBsr8yAvLT65LvcZ_3oQTaQKzJ3yZYXmkIf5xVhvmXyMWZaAEVDGXTJDmUy9ZgKoXe1s1aWtg6fzOrX_Xp_ZywlyC2EW4-bC9BFLf_MXec6IdwGGkE6ibdUy1l9JMgj4zI0P5IrC7E7Y4P1vWxKtFGdIvQewp1ocw0dhNItpxRlBBdybyB0Sn2HZ4toy_80qXAF3jGSaFp1g9P1FybhMCvDw-HQr9ENkR26NfieWrSGlGCWn4Twjmy6PqI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<span class="text-[10px] font-label-caps bg-primary text-on-primary px-2 py-0.5 rounded mb-2 inline-block">MOST SIMILAR</span>
+<h4 class="font-bold text-lg leading-tight">City Marathon 2023</h4>
+</div>
+</div>
+<div class="p-5 flex-1 flex flex-col">
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<span class="block text-[10px] font-label-caps text-on-surface-variant">Similarity</span>
+<span class="font-data-mono text-primary text-xl">96.8%</span>
+</div>
+<div>
+<span class="block text-[10px] font-label-caps text-on-surface-variant">Outcome</span>
+<span class="font-data-mono text-tertiary text-xl">Success</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-white/5 rounded border border-white/5 mb-4">
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span> Resolution Time
+                                    </span>
+<span class="font-data-mono text-sm">04:12:44</span>
+</div>
+<button class="mt-auto w-full py-2 bg-primary/10 border border-primary/20 text-primary font-label-caps text-xs rounded hover:bg-primary hover:text-on-primary transition-all flex items-center justify-center gap-2">
+                                    ANALYZE ARCHIVE <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Match Card 2 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group">
+<div class="relative h-40 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A wide architectural shot of a massive modern stadium glowing with neon purple lights against a deep night sky. Crowds of people are visualized as light trails moving toward the entrance. The scene is futuristic and energetic with a dark, moody atmosphere and high-tech cinematic lighting. Digital art aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB49qcoE98LwWbc2IA2N2UN_pZiEdk1n7q7DCSx2oAmTyaREomdfpjxsoplkMqqacN0hE17ikbYY5K4ZU2qI7qwEXUpfZfKw0YhEfLi_VRbDGY0KyGkjQcMvlwlCYadXaI8AftwQNmvoOGkuxwxjxmMY6f3JwUrPafh4Sn3ZDVcxmBe0VGKWZ2A_82Sxnw5Z6c-MmFEWePaMKnx9GWOXeVrqVmxeumUIrSsX2sBbbJBm-kvyA4X3pJvphluq_zgQX_DmjcDjNHf0hI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<h4 class="font-bold text-lg leading-tight">Stadium Opening Night</h4>
+</div>
+</div>
+<div class="p-5 flex-1 flex flex-col">
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<span class="block text-[10px] font-label-caps text-on-surface-variant">Similarity</span>
+<span class="font-data-mono text-primary text-xl">82.1%</span>
+</div>
+<div>
+<span class="block text-[10px] font-label-caps text-on-surface-variant">Outcome</span>
+<span class="font-data-mono text-error text-xl">Critical</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-white/5 rounded border border-white/5 mb-4">
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span> Resolution Time
+                                    </span>
+<span class="font-data-mono text-sm">08:45:12</span>
+</div>
+<button class="mt-auto w-full py-2 bg-white/5 border border-white/10 text-on-surface font-label-caps text-xs rounded hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                                    VIEW REPLAY <span class="material-symbols-outlined text-[16px]">play_circle</span>
+</button>
+</div>
+</div>
+<!-- Match Card 3 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group">
+<div class="relative h-40 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="An aerial view of a smart city network at dusk with digital data overlays. Glowing blue lines trace the flow of autonomous vehicles through a complex interchange. The image has a sophisticated corporate intelligence feel, with deep navy and electric blue tones. Sharp, detailed, and high-tech visualization." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBA_qg2ul5JaJVcRBYwQUFQ36kA5-HWIX5UmQfXMPdLB9t_gH3E65PZjdrfdJYwDeOBPSBIwHX2m1Fj1GhrV6YKPgC2BwU6NJ2pIGEycSaDl3wZDCzGruQognaVSFRdnawhVdG-16mMBf4MfG_eCFtcoYh0Wj3F5I6x4cZB8So6dZo71iRcNOwQtv9XeOu0fpk33YtoOVO9npeiRpXpv91HARZf6umCXMlWH4pgRKy-vrgD2pbxD4ohBHN1Xh2CaNdW-NBuplPZ88Y"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent"></div>
+<div class="absolute bottom-4 left-4">
+<h4 class="font-bold text-lg leading-tight">Fleet System Reboot</h4>
+</div>
+</div>
+<div class="p-5 flex-1 flex flex-col">
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<span class="block text-[10px] font-label-caps text-on-surface-variant">Similarity</span>
+<span class="font-data-mono text-primary text-xl">74.5%</span>
+</div>
+<div>
+<span class="block text-[10px] font-label-caps text-on-surface-variant">Outcome</span>
+<span class="font-data-mono text-tertiary text-xl">Success</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-white/5 rounded border border-white/5 mb-4">
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span> Resolution Time
+                                    </span>
+<span class="font-data-mono text-sm">01:30:00</span>
+</div>
+<button class="mt-auto w-full py-2 bg-white/5 border border-white/10 text-on-surface font-label-caps text-xs rounded hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                                    ANALYZE ARCHIVE <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 -z-50 pointer-events-none overflow-hidden">
+<div class="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
+<div class="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-secondary/5 rounded-full blur-[120px] animate-pulse" style="animation-delay: 2s"></div>
+</div>
+<script>
+        // Simple Interaction Logic
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousedown', () => {
+                card.style.transform = 'scale(0.98)';
+            });
+            card.addEventListener('mouseup', () => {
+                card.style.transform = 'scale(1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+
+        // Pulsing AI status indicator simulation
+        const statusDot = document.querySelector('.neural-dot');
+        setInterval(() => {
+            statusDot.style.opacity = Math.random() > 0.5 ? '1' : '0.4';
+        }, 800);
+    </script>
+</body></html>
