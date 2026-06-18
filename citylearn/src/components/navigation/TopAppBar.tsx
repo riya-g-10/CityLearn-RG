@@ -28,10 +28,10 @@ export default function TopAppBar() {
 
   return (
     <>
-      <header className="h-16 border-b border-border bg-white flex items-center justify-between px-6 sticky top-0 z-20">
+      <header className="h-16 border-b border-border bg-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
         
         {/* Search Bar */}
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1">
           {/* Hamburger Menu Button */}
           <button
             onClick={() => setIsOpen(true)}
@@ -52,7 +52,7 @@ export default function TopAppBar() {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           
           {/* Notification Bell */}
           <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
@@ -61,13 +61,13 @@ export default function TopAppBar() {
           </Button>
 
           {/* Divider */}
-          <div className="h-4 w-px bg-border mx-1" />
+          <div className="h-4 w-px bg-border mx-0.5 sm:mx-1" />
 
           {/* Clock & Calendar */}
-          <div className="flex items-center gap-2 pl-2">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-foreground min-h-[16px]">{time || "--:--"}</p>
-              <p className="text-[9px] text-muted-foreground font-semibold uppercase min-h-[12px]">{date || "Loading..."}</p>
+          <div className="flex items-center gap-1 sm:gap-2 pl-1 sm:pl-2">
+            <div className="text-right">
+              <p className="text-[10px] sm:text-xs font-bold text-foreground min-h-[14px] sm:min-h-[16px] leading-tight">{time || "--:--"}</p>
+              <p className="text-[8px] sm:text-[9px] text-muted-foreground font-semibold uppercase min-h-[10px] sm:min-h-[12px] leading-tight">{date || "Loading..."}</p>
             </div>
           </div>
 
