@@ -52,7 +52,9 @@ export default function Page() {
         {/* Top AppBar */}
         <header className="bg-white border-b border-border text-foreground sticky top-0 z-50 flex justify-between items-center w-full px-6 md:px-8 h-16 shadow-sm">
           <div className="flex items-center gap-4">
-            <span className="text-lg font-bold text-primary tracking-tight">CityLearn Intelligence</span>
+            <span className="text-lg font-bold text-primary tracking-tight">
+              <span className="font-croissant">CityLearn</span> Intelligence
+            </span>
             <div className="h-5 w-[1px] bg-border hidden md:block"></div>
             <span className="font-mono text-muted-foreground uppercase tracking-widest text-[9px] hidden md:block">
               Profile Provisioning Engine

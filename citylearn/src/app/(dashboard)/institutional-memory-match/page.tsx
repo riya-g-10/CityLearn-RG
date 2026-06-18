@@ -64,13 +64,9 @@ export default function Page() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-bold tracking-wider rounded uppercase">AI Analytics</span>
-              <span className="text-muted-foreground text-[9px] font-bold tracking-wider uppercase font-mono">Match Engine v4.2</span>
-            </div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">Historical Match Engine</h1>
+            <h1 className="page-heading text-foreground">Historical Match Engine</h1>
             <p className="text-muted-foreground text-sm max-w-2xl">
-              Retrieving spatial-temporal patterns from Institutional Memory. Current event: <span className="text-primary font-bold">Downtown Fleet Migration (ID: 99x-A)</span>.
+              Retrieving spatial-temporal patterns from Institutional Memory.
             </p>
           </div>
           

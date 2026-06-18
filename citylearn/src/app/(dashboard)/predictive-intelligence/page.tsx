@@ -98,7 +98,7 @@ export default function Page() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1">
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">System Predictions</h1>
+            <h1 className="page-heading text-foreground">System Predictions</h1>
             <p className="text-sm text-muted-foreground max-w-2xl">
               Real-time neural forecasting for urban resource distribution and critical infrastructure maintenance.
             </p>

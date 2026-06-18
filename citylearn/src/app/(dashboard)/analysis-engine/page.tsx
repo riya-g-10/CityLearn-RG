@@ -73,7 +73,7 @@ export default function Page() {
         
         {/* Page Header */}
         <div className="space-y-1">
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">Analyze New Event</h1>
+          <h1 className="page-heading text-foreground">Analyze New Event</h1>
           <p className="text-muted-foreground text-sm max-w-lg">Input urban dynamics to trigger CityLearn’s signature recognition and similarity mapping engine.</p>
         </div>
 
@@ -104,8 +104,8 @@ export default function Page() {
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Location</label>
                   <div className="relative">
-                    <input className="w-full bg-muted/40 border border-border rounded-lg p-3 text-sm text-muted-foreground font-mono cursor-not-allowed" readOnly="" type="text" value="Zone 4"/>
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base text-muted-foreground opacity-50">lock</span>
+                    <input className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all font-mono" type="text" defaultValue="Zone 4"/>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-base text-muted-foreground opacity-50">location_on</span>
                   </div>
                 </div>
               </div>
@@ -172,21 +172,19 @@ export default function Page() {
           </section>
 
           {/* Right Column: Visualization */}
-          <section className="space-y-6">
+          <section className="space-y-6 flex flex-col h-full">
             
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Signature Recognition</h2>
-              <span className="px-2.5 py-0.5 bg-primary/10 border border-primary/20 rounded text-[9px] font-bold text-primary uppercase">Real-time Embedding</span>
             </div>
 
             {/* Signature Canvas */}
-            <div className="bg-white border border-border rounded-xl relative p-8 flex flex-col items-center justify-center overflow-hidden shadow-sm min-h-[350px]">
+            <div className="bg-white border border-border rounded-xl relative p-8 flex flex-col items-center justify-center overflow-hidden shadow-sm flex-1">
               
               {/* DNA Display */}
               <div className="relative z-10 w-full max-w-md space-y-6">
                 <div className="text-center space-y-1">
                   <h3 className="font-display text-xl font-bold text-foreground">CityLearn Signature</h3>
-                  <p className="text-muted-foreground text-xs font-mono">Hash: 0xFD44...88BE</p>
                 </div>
                 
                 {/* DNA segments */}
@@ -207,69 +205,15 @@ export default function Page() {
                     <div className="dna-segment opacity-60" style={{ width: '35%' }}></div>
                   </div>
                   <div className="flex items-center gap-4 flex-row-reverse">
-                    <div className="dna-segment opacity-30" style={{ width: '30%' }}></div>
+                    <div className="dna-segment" style={{ width: '30%' }}></div>
                     <div className="dna-segment" style={{ width: '50%' }}></div>
                     <div className="dna-segment" style={{ width: '15%' }}></div>
                   </div>
                 </div>
-
-                {/* Node Graph Embedding */}
-                <div className="bg-muted/40 p-4 rounded-xl border border-border relative">
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <span className="material-symbols-outlined text-sm text-primary">hub</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Embedding Projection</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-5 gap-4 h-24 items-center justify-items-center relative">
-                    <div className="relative">
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary relative z-10"></div>
-                      <div className="absolute inset-0 bg-primary/20 blur-sm rounded-full"></div>
-                    </div>
-                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/35"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-secondary relative z-10"></div>
-                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/35"></div>
-                    <div className="w-3 h-3 rounded-full bg-primary relative z-10"></div>
-                    <div className="w-1 h-1 rounded-full bg-muted-foreground/20"></div>
-                    <div className="w-2.5 h-2.5 rounded-full bg-accent relative z-10"></div>
-                    <div className="w-1 h-1 rounded-full bg-muted-foreground/20"></div>
-                    <div className="w-2 h-2 rounded-full bg-muted-foreground/50"></div>
-                    <div className="w-1 h-1 rounded-full bg-muted-foreground/20"></div>
-                    
-                    {/* SVG connection overlay */}
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" stroke="currentColor" strokeWidth="0.75" fill="none">
-                      <line x1="20%" x2="40%" y1="30%" y2="70%"></line>
-                      <line x1="40%" x2="80%" y1="70%" y2="40%"></line>
-                      <line x1="80%" x2="50%" y1="40%" y2="20%"></line>
-                      <line x1="50%" x2="20%" y1="20%" y2="30%"></line>
-                    </svg>
-                  </div>
-                </div>
               </div>
 
-              {/* Data Summary floating badge */}
-              <div className="absolute bottom-4 right-4 z-10">
-                <div className="flex items-center gap-2 bg-white/90 border border-border rounded-full px-3 py-1.5 shadow-sm text-[9px] font-bold text-muted-foreground">
-                  <span className="uppercase">Cluster</span>
-                  <span className="text-primary font-mono">V4-Z4-S9</span>
-                </div>
-              </div>
 
-            </div>
 
-            {/* Recommendation card */}
-            <div className="bg-white border border-border p-5 rounded-2xl flex items-center justify-between border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined" style={{"fontVariationSettings": "'FILL' 1"}}>recommend</span>
-                </div>
-                <div className="space-y-0.5">
-                  <h4 className="font-display font-bold text-sm text-foreground">Primary Recommendation</h4>
-                  <p className="text-xs text-muted-foreground">Redirect Transit Line 84 due to high similarity with 'Olympiad Surge 2022'</p>
-                </div>
-              </div>
-              <button className="px-3.5 py-1.5 bg-muted hover:bg-muted-foreground/10 border border-border rounded-lg text-[10px] font-bold tracking-wider uppercase transition-colors">
-                View Case
-              </button>
             </div>
 
           </section>

@@ -100,7 +100,7 @@ export default function Page() {
         
         {/* Header Section */}
         <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+          <h1 className="page-heading text-foreground">
             Knowledge Graph
           </h1>
           <p className="text-muted-foreground text-sm max-w-xl">
