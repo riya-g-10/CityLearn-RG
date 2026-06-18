@@ -50,12 +50,12 @@ export default function Page() {
           }}
         >
           <div className="relative z-10 max-w-2xl space-y-3">
-            <span className="text-[9px] font-bold tracking-wider text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full uppercase">
-              Urban Intelligence Platform
-            </span>
-            <h1 className="font-display text-3xl md:text-4xl text-foreground tracking-tight leading-none font-bold">
+
+            <h1 className="font-merriweather text-3xl md:text-4xl text-foreground tracking-tight leading-none font-bold">
               Cities Forget. <br/>
-              <span className="text-primary font-extrabold">CityLearn Remembers.</span>
+              <span className="font-merriweather text-primary font-extrabold">
+                <span className="font-croissant">CityLearn</span> Remembers.
+              </span>
             </h1>
             <p className="font-sans text-xs md:text-sm text-muted-foreground max-w-lg leading-relaxed">
               Advanced urban intelligence mapping trillions of historical data points to predict and optimize city infrastructure.

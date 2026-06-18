@@ -56,19 +56,11 @@ export default function Page() {
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-[10px] font-bold tracking-wider uppercase">
-                Predictive Response
-              </span>
-              <span className="text-muted-foreground font-mono text-xs">
-                LOG_ID: #X7G-ANOMALY-0092
-              </span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-              Response Strategies for Sector 7-G Anomaly
+            <h1 className="page-heading text-foreground">
+              Response Strategies
             </h1>
             <p className="text-muted-foreground text-sm max-w-xl">
-              Neural intelligence recommendation matrix for containment and optimization of Sector 7-G.
+              Neural Intelligence Recommendation Matrix for Containment and Optimization
             </p>
           </div>
 
@@ -251,7 +243,7 @@ export default function Page() {
               <div className="space-y-4 pt-4 border-t border-border">
                 <div className="p-4 rounded-xl bg-amber-50/30 border border-amber-100 text-amber-900">
                   <p className="text-xs italic leading-relaxed text-amber-800">
-                    "Implementing current diversion vectors will reduce gridlock in adjacent Sector 7-F by approximately 14% within 10 minutes of activation."
+                    "Implementing current diversion vectors will reduce gridlock in adjacent sectors by approximately 14% within 10 minutes of activation."
                   </p>
                 </div>
                 

@@ -1,4 +1,6 @@
 /* src/app/globals.css */
+@import url('https://fonts.googleapis.com/css2?family=Croissant+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -23,10 +25,14 @@
   
   --font-display: var(--font-eb-garamond), serif;
   --font-sans: var(--font-noto-sans), sans-serif;
+  --font-croissant: 'Croissant One', cursive;
+  --font-merriweather: 'Merriweather', serif;
 }
 
 @layer base {
   :root {
+    --font-display: var(--font-eb-garamond), Georgia, serif;
+    --font-merriweather: 'Merriweather', Georgia, serif;
     --background: 240 10% 98%; /* Light off-white */
     --foreground: 224 71.4% 4%; /* Dark slate charcoal */
     --card: 0 0% 100%; /* Pure white */
@@ -60,9 +66,13 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   
-  h1, h2, h3, h4, h5, h6, .font-display {
-    font-family: var(--font-eb-garamond), Georgia, serif;
+  h1, h2, h3, h4, h5, h6, .font-merriweather {
+    font-family: 'Merriweather', Georgia, serif;
     @apply font-semibold tracking-tight;
+  }
+  
+  .font-display {
+    font-family: var(--font-display), Georgia, serif;
   }
   
   p, span, div, input, select, button, label, .font-sans {
@@ -77,4 +87,27 @@
 .glass-card:hover {
   @apply shadow-md border-primary/20;
 }
+
+/* Page heading typography standardization */
+.page-heading {
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 1.875rem; /* text-3xl */
+  line-height: 2.25rem;
+  font-weight: 700; /* font-bold */
+  letter-spacing: -0.025em; /* tracking-tight */
+}
+
+@media (min-width: 768px) {
+  .page-heading {
+    font-size: 2.25rem; /* text-4xl */
+    line-height: 2.5rem;
+  }
+}
+
+/* Suppress browser-default password show/hide eye icon in MS Edge */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 

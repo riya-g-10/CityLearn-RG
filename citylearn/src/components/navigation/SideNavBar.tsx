@@ -16,7 +16,7 @@ import {
   UserCircle
 } from "lucide-react";
 
-const navItems = [
+export const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Analysis", icon: BarChart3, href: "/analysis-engine" },
   { label: "Similar Events", icon: History, href: "/institutional-memory-match" },
@@ -36,7 +36,7 @@ export default function SideNavBar() {
           <BrainCircuit className="text-primary w-5 h-5" />
         </div>
         <div>
-          <h2 className="font-display font-bold tracking-tight text-lg text-foreground">CityLearn</h2>
+          <h2 className="font-croissant font-bold tracking-tight text-lg text-foreground">CityLearn</h2>
           <p className="text-[10px] uppercase text-muted-foreground tracking-widest font-semibold">Institutional Memory</p>
         </div>
       </div>

@@ -32,11 +32,11 @@ export default function Page() {
         }
       ` }} />
 
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header Section */}
         <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+          <h1 className="page-heading text-foreground">
             User Profile
           </h1>
           <p className="text-muted-foreground text-sm max-w-xl">
@@ -45,7 +45,7 @@ export default function Page() {
         </div>
 
         {/* Hero Section & Quick Actions */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <div className="lg:col-span-2 bg-white border border-border shadow-sm rounded-2xl p-8 relative overflow-hidden flex items-center">
             <div className="flex flex-col md:flex-row items-center md:items-center gap-6 relative z-10 w-full">
@@ -66,10 +66,7 @@ export default function Page() {
 
               {/* User Metadata */}
               <div className="text-center md:text-left space-y-2 flex-grow">
-                <div className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded text-[9px] font-bold uppercase tracking-wider">
-                  Verified Expert
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">Alex Rivera</h2>
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">Alex Rivera</h2>
                 <p className="text-muted-foreground text-sm">
                   Senior Urban Logistics Architect • City Operations AI
                 </p>
@@ -135,7 +132,7 @@ export default function Page() {
         </section>
 
         {/* Stats Grid */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           
           {/* Card 1 */}
           <div className="bg-white border border-border shadow-sm p-6 rounded-xl hover:border-primary/20 transition-colors">
@@ -176,7 +173,7 @@ export default function Page() {
         </section>
 
         {/* Charts & Activities */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Performance Chart (2 Columns) */}
           <div className="lg:col-span-2 bg-white border border-border shadow-sm p-8 rounded-xl">

@@ -5,21 +5,11 @@ import React, { useEffect } from "react";
 import { CrowdCanvas } from "@/components/shared/CrowdCanvas";
 
 export default function Page() {
+  const [showPassword, setShowPassword] = React.useState(false);
 
   useEffect(() => {
     const runScript = () => {
       try {
-        // Password Visibility Toggle
-        const togglePassword = document.getElementById('toggle-password');
-        const passwordInput = document.getElementById('password');
-
-        if (togglePassword && passwordInput) {
-          togglePassword.addEventListener('click', () => {
-            const isPassword = passwordInput.type === 'password';
-            passwordInput.type = isPassword ? 'text' : 'password';
-            togglePassword.querySelector('span').textContent = isPassword ? 'visibility_off' : 'visibility';
-          });
-        }
 
         // Form Submission Interaction
         const loginForm = document.getElementById('login-form');
@@ -69,6 +59,11 @@ export default function Page() {
           outline: none;
           box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
         }
+        /* Suppress browser-default password reveal eye icon */
+        input::-ms-reveal,
+        input::-ms-clear {
+          display: none;
+        }
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 4px;
@@ -91,7 +86,7 @@ export default function Page() {
         <header className="relative z-10 w-full h-16 flex items-center px-6 md:px-12 bg-white/70 backdrop-blur-md border-b border-border">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary text-2xl" style={{"fontVariationSettings": "'FILL' 1"}}>network_intelligence</span>
-            <h1 className="font-display text-xl md:text-2xl font-bold tracking-tight text-foreground">CityLearn</h1>
+            <h1 className="font-croissant text-xl md:text-2xl font-bold tracking-tight text-foreground">CityLearn</h1>
           </div>
         </header>
 
@@ -101,7 +96,7 @@ export default function Page() {
             {/* Tagline */}
             <div className="mb-8 text-center select-none overflow-visible">
               <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-black to-blue-600 bg-clip-text text-transparent pb-2 px-2 whitespace-nowrap">
-                Welcome to CityLearn!
+                Welcome to <span className="font-croissant">CityLearn</span>!
               </h2>
               <div className="mx-auto w-16 h-1 bg-gradient-to-r from-black to-blue-600 rounded-full opacity-85 mt-3"></div>
             </div>
@@ -127,9 +122,9 @@ export default function Page() {
                   </div>
                   <div className="relative group">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base transition-colors duration-200">lock</span>
-                    <input className="w-full bg-muted/30 border border-border rounded-lg py-3 pl-10 pr-12 text-sm font-sans text-foreground transition-all focus:bg-white focus:border-primary" id="password" placeholder="••••••••••••" required="" type="password"/>
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary p-1" id="toggle-password" type="button">
-                      <span className="material-symbols-outlined text-base">visibility</span>
+                    <input className="w-full bg-muted/30 border border-border rounded-lg py-3 pl-10 pr-12 text-sm font-sans text-foreground transition-all focus:bg-white focus:border-primary" id="password" placeholder="••••••••••••" required="" type={showPassword ? "text" : "password"}/>
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary p-1" id="toggle-password" type="button" onClick={() => setShowPassword(!showPassword)}>
+                      <span className="material-symbols-outlined text-base">{showPassword ? "visibility" : "visibility_off"}</span>
                     </button>
                   </div>
                 </div>

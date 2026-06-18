@@ -3,107 +3,105 @@
 
 import React, { useEffect, useState } from "react";
 import { CrowdCanvas } from "@/components/shared/CrowdCanvas";
-
-const countriesData = [
-  {
-    name: "United States",
-    states: [
-      { name: "California", cities: ["San Francisco", "Los Angeles", "San Diego", "San Jose"] },
-      { name: "New York", cities: ["New York City", "Buffalo", "Rochester"] },
-      { name: "Texas", cities: ["Houston", "Austin", "Dallas", "San Antonio"] },
-    ],
-  },
-  {
-    name: "Singapore",
-    states: [
-      { name: "Central Region", cities: ["Singapore"] },
-    ],
-  },
-  {
-    name: "Germany",
-    states: [
-      { name: "Bavaria", cities: ["Munich", "Nuremberg"] },
-      { name: "Berlin", cities: ["Berlin"] },
-      { name: "Hamburg", cities: ["Hamburg"] },
-    ],
-  },
-  {
-    name: "Japan",
-    states: [
-      { name: "Tokyo Prefecture", cities: ["Tokyo"] },
-      { name: "Osaka Prefecture", cities: ["Osaka"] },
-      { name: "Kyoto Prefecture", cities: ["Kyoto"] },
-    ],
-  },
-  {
-    name: "United Kingdom",
-    states: [
-      { name: "England", cities: ["London", "Manchester", "Birmingham"] },
-      { name: "Scotland", cities: ["Edinburgh", "Glasgow"] },
-    ],
-  },
-  {
-    name: "Canada",
-    states: [
-      { name: "Ontario", cities: ["Toronto", "Ottawa"] },
-      { name: "Quebec", cities: ["Montreal"] },
-      { name: "British Columbia", cities: ["Vancouver"] },
-    ],
-  },
-  {
-    name: "India",
-    states: [
-      { name: "Maharashtra", cities: ["Mumbai", "Pune"] },
-      { name: "Delhi", cities: ["New Delhi"] },
-      { name: "Karnataka", cities: ["Bangalore"] },
-    ],
-  },
-  {
-    name: "Australia",
-    states: [
-      { name: "New South Wales", cities: ["Sydney"] },
-      { name: "Victoria", cities: ["Melbourne"] },
-    ],
-  },
-];
+import { Country, State, City } from "country-state-city";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 export default function Page() {
-  const [selectedCountry, setSelectedCountry] = useState(countriesData[0].name);
-  const [selectedState, setSelectedState] = useState(countriesData[0].states[0].name);
-  const [selectedCity, setSelectedCity] = useState(countriesData[0].states[0].cities[0]);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("");
+  const [selectedStateCode, setSelectedStateCode] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Derived arrays
-  const currentCountryObj = countriesData.find((c) => c.name === selectedCountry) || countriesData[0];
-  const statesList = currentCountryObj.states;
-  const currentStateObj = statesList.find((s) => s.name === selectedState) || statesList[0] || { cities: [] };
-  const citiesList = currentStateObj.cities;
+  const [countryOpen, setCountryOpen] = useState(false);
+  const [stateOpen, setStateOpen] = useState(false);
+  const [cityOpen, setCityOpen] = useState(false);
 
-  const handleCountryChange = (countryName: string) => {
-    setSelectedCountry(countryName);
-    const countryObj = countriesData.find((c) => c.name === countryName);
-    if (countryObj && countryObj.states.length > 0) {
-      const firstState = countryObj.states[0];
-      setSelectedState(firstState.name);
-      if (firstState.cities.length > 0) {
-        setSelectedCity(firstState.cities[0]);
-      } else {
-        setSelectedCity("");
+  const [countrySearch, setCountrySearch] = useState("");
+  const [stateSearch, setStateSearch] = useState("");
+  const [citySearch, setCitySearch] = useState("");
+
+  // Memoized lists from library
+  const countries = React.useMemo(() => Country.getAllCountries(), []);
+
+  const selectedCountryObj = React.useMemo(() => {
+    return countries.find((c) => c.isoCode === selectedCountryCode);
+  }, [selectedCountryCode, countries]);
+
+  const statesList = React.useMemo(() => {
+    return selectedCountryCode ? State.getStatesOfCountry(selectedCountryCode) : [];
+  }, [selectedCountryCode]);
+
+  const selectedStateObj = React.useMemo(() => {
+    return statesList.find((s) => s.isoCode === selectedStateCode);
+  }, [selectedStateCode, statesList]);
+
+  const citiesList = React.useMemo(() => {
+    if (!selectedCountryCode) return [];
+    if (statesList.length === 0) {
+      return City.getCitiesOfCountry(selectedCountryCode) || [];
+    }
+    return selectedStateCode
+      ? City.getCitiesOfState(selectedCountryCode, selectedStateCode)
+      : [];
+  }, [selectedCountryCode, selectedStateCode, statesList]);
+
+  const handleCountryChange = (countryCode: string) => {
+    setSelectedCountryCode(countryCode);
+    setSelectedStateCode("");
+    setSelectedCity("");
+    setStateSearch("");
+    setCitySearch("");
+  };
+
+  const handleStateChange = (stateCode: string) => {
+    setSelectedStateCode(stateCode);
+    setSelectedCity("");
+    setCitySearch("");
+  };
+
+  // Search filtering with performance limitation of 100 entries max
+  const filteredCountries = React.useMemo(() => {
+    if (!countrySearch) return countries.slice(0, 100);
+    const lowerSearch = countrySearch.toLowerCase();
+    const matches: any[] = [];
+    for (const c of countries) {
+      if (c.name.toLowerCase().includes(lowerSearch)) {
+        matches.push(c);
+        if (matches.length >= 100) break;
       }
-    } else {
-      setSelectedState("");
-      setSelectedCity("");
     }
-  };
+    return matches;
+  }, [countries, countrySearch]);
 
-  const handleStateChange = (stateName: string) => {
-    setSelectedState(stateName);
-    const stateObj = statesList.find((s) => s.name === stateName);
-    if (stateObj && stateObj.cities.length > 0) {
-      setSelectedCity(stateObj.cities[0]);
-    } else {
-      setSelectedCity("");
+  const filteredStates = React.useMemo(() => {
+    if (!stateSearch) return statesList.slice(0, 100);
+    const lowerSearch = stateSearch.toLowerCase();
+    const matches: any[] = [];
+    for (const s of statesList) {
+      if (s.name.toLowerCase().includes(lowerSearch)) {
+        matches.push(s);
+        if (matches.length >= 100) break;
+      }
     }
-  };
+    return matches;
+  }, [statesList, stateSearch]);
+
+  const filteredCities = React.useMemo(() => {
+    if (!citySearch) return citiesList.slice(0, 100);
+    const lowerSearch = citySearch.toLowerCase();
+    const matches: any[] = [];
+    for (const city of citiesList) {
+      if (city.name.toLowerCase().includes(lowerSearch)) {
+        matches.push(city);
+        if (matches.length >= 100) break;
+      }
+    }
+    return matches;
+  }, [citiesList, citySearch]);
+
+  const isCityDisabled = !selectedCountryCode || (statesList.length > 0 && !selectedStateCode);
 
   useEffect(() => {
     const runScript = () => {
@@ -195,6 +193,34 @@ export default function Page() {
               currentStep++;
               updateUI();
             } else {
+              // Validate Step 3 fields: Country, State, City
+              const countryVal = (document.getElementsByName("country")[0] as HTMLInputElement)?.value;
+              const stateVal = (document.getElementsByName("state")[0] as HTMLInputElement)?.value;
+              const cityVal = (document.getElementsByName("city")[0] as HTMLInputElement)?.value;
+
+              const stateBtn = document.getElementById("state-trigger-btn") as HTMLButtonElement;
+              const isStateRequired = stateBtn && !stateBtn.disabled;
+
+              if (!countryVal) {
+                alert("Please select a Country.");
+                return;
+              }
+              if (isStateRequired && !stateVal) {
+                alert("Please select a State/Region.");
+                return;
+              }
+              if (!cityVal) {
+                alert("Please select a Primary City.");
+                return;
+              }
+
+              // Validate terms checkbox
+              const termsCheckbox = document.getElementById("terms") as HTMLInputElement;
+              if (termsCheckbox && !termsCheckbox.checked) {
+                alert("Please agree to the Terms of Service and Data Governance Protocol.");
+                return;
+              }
+
               // Submit logic
               nextBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm mr-1">progress_activity</span> Deploying...';
               nextBtn.disabled = true;
@@ -237,7 +263,7 @@ export default function Page() {
       }
     };
     runScript();
-  }, []);
+  }, [countries]);
 
   return (
     <>
@@ -249,6 +275,11 @@ export default function Page() {
         input:focus, select:focus {
           outline: none;
           box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+        }
+        /* Suppress browser-default password reveal eye icon */
+        input::-ms-reveal,
+        input::-ms-clear {
+          display: none;
         }
         .step-transition {
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -285,7 +316,7 @@ export default function Page() {
             <div className="relative z-10 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>network_intelligence</span>
-                <span className="font-display font-bold text-lg text-foreground">CityLearn</span>
+                <span className="font-croissant font-bold text-lg text-foreground">CityLearn</span>
               </div>
               <h2 className="font-display text-2xl font-bold leading-tight">Urban Analytics</h2>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -314,6 +345,11 @@ export default function Page() {
 
             <form className="space-y-5" id="signup-form" onSubmit={(e) => e.preventDefault()}>
               
+              {/* Hidden Inputs for Country/State/City */}
+              <input type="hidden" name="country" value={selectedCountryObj ? selectedCountryObj.name : ""} />
+              <input type="hidden" name="state" value={selectedStateObj ? selectedStateObj.name : ""} />
+              <input type="hidden" name="city" value={selectedCity} />
+
               {/* Step 1: Personal Credentials */}
               <div className="step-transition space-y-4" id="step-1-content">
                 <div className="space-y-1">
@@ -327,14 +363,24 @@ export default function Page() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Password</label>
-                    <input className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground transition-all focus:bg-white focus:border-primary" id="password" placeholder="••••••••" type="password" required />
+                    <div className="relative group">
+                      <input className="w-full bg-slate-50 border border-border rounded-lg pl-4 pr-12 py-3 text-sm font-sans text-foreground transition-all focus:bg-white focus:border-primary" id="password" placeholder="••••••••" type={showPassword ? "text" : "password"} required />
+                      <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary p-1" type="button" onClick={() => setShowPassword(!showPassword)}>
+                        <span className="material-symbols-outlined text-base">{showPassword ? "visibility" : "visibility_off"}</span>
+                      </button>
+                    </div>
                     <div className="password-strength-meter mt-2">
                       <div className="strength-bar" id="strength-bar"></div>
                     </div>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Confirm Password</label>
-                    <input className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground transition-all focus:bg-white focus:border-primary" placeholder="••••••••" type="password" required />
+                    <div className="relative group">
+                      <input className="w-full bg-slate-50 border border-border rounded-lg pl-4 pr-12 py-3 text-sm font-sans text-foreground transition-all focus:bg-white focus:border-primary" placeholder="••••••••" type={showConfirmPassword ? "text" : "password"} required />
+                      <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary p-1" type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        <span className="material-symbols-outlined text-base">{showConfirmPassword ? "visibility" : "visibility_off"}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -362,61 +408,142 @@ export default function Page() {
 
               {/* Step 3: Geo-Spatial Context */}
               <div className="step-transition space-y-4 hidden opacity-0 translate-x-10" id="step-3-content">
+                
+                {/* Country Dropdown */}
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Country</label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none"
-                      value={selectedCountry}
-                      onChange={(e) => handleCountryChange(e.target.value)}
-                    >
-                      {countriesData.map((country) => (
-                        <option key={country.name} value={country.name}>
-                          {country.name}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
-                  </div>
+                  <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full h-12 bg-slate-50 border border-border rounded-lg px-4 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all flex items-center justify-between text-left"
+                      >
+                        <span className="truncate flex-grow pr-2">{selectedCountryObj ? selectedCountryObj.name : "Select Country..."}</span>
+                        <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">expand_more</span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="bg-white border border-border shadow-lg max-h-[280px] overflow-hidden rounded-lg">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Search country..." 
+                          value={countrySearch} 
+                          onValueChange={setCountrySearch} 
+                        />
+                        <CommandList>
+                          <CommandEmpty>No country found.</CommandEmpty>
+                          <CommandGroup>
+                            {filteredCountries.map((country) => (
+                              <CommandItem
+                                key={country.isoCode}
+                                value={country.name}
+                                onSelect={() => {
+                                  handleCountryChange(country.isoCode);
+                                  setCountryOpen(false);
+                                  setCountrySearch("");
+                                }}
+                              >
+                                {country.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">State/Region</label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none"
-                        value={selectedState}
-                        onChange={(e) => handleStateChange(e.target.value)}
+                {/* State / Province Dropdown */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">State/Region</label>
+                  <Popover open={stateOpen} onOpenChange={setStateOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        id="state-trigger-btn"
+                        type="button"
+                        disabled={!selectedCountryCode}
+                        className="w-full h-12 bg-slate-50 border border-border rounded-lg px-4 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
                       >
-                        {statesList.map((state) => (
-                          <option key={state.name} value={state.name}>
-                            {state.name}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Primary City</label>
-                    <div className="relative">
-                      <select
-                        className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all appearance-none"
-                        value={selectedCity}
-                        onChange={(e) => setSelectedCity(e.target.value)}
-                      >
-                        {citiesList.map((city) => (
-                          <option key={city} value={city}>
-                            {city}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
-                    </div>
-                  </div>
+                        <span className="truncate flex-grow pr-2">{selectedStateObj ? selectedStateObj.name : "Select State..."}</span>
+                        <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">expand_more</span>
+                      </button>
+                    </PopoverTrigger>
+                    {selectedCountryCode && (
+                      <PopoverContent className="bg-white border border-border shadow-lg max-h-[280px] overflow-hidden rounded-lg">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search state..." 
+                            value={stateSearch} 
+                            onValueChange={setStateSearch} 
+                          />
+                          <CommandList>
+                            <CommandEmpty>No state found.</CommandEmpty>
+                            <CommandGroup>
+                              {filteredStates.map((state) => (
+                                <CommandItem
+                                  key={state.isoCode}
+                                  value={state.name}
+                                  onSelect={() => {
+                                    handleStateChange(state.isoCode);
+                                    setStateOpen(false);
+                                    setStateSearch("");
+                                  }}
+                                >
+                                  {state.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    )}
+                  </Popover>
                 </div>
-
+                
+                {/* City Dropdown */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Primary City</label>
+                  <Popover open={cityOpen} onOpenChange={setCityOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={isCityDisabled}
+                        className="w-full h-12 bg-slate-50 border border-border rounded-lg px-4 text-sm font-sans text-foreground focus:bg-white focus:border-primary outline-none transition-all flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+                      >
+                        <span className="truncate flex-grow pr-2">{selectedCity || "Select City..."}</span>
+                        <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">expand_more</span>
+                      </button>
+                    </PopoverTrigger>
+                    {!isCityDisabled && (
+                      <PopoverContent className="bg-white border border-border shadow-lg max-h-[280px] overflow-hidden rounded-lg">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search city..." 
+                            value={citySearch} 
+                            onValueChange={setCitySearch} 
+                          />
+                          <CommandList>
+                            <CommandEmpty>No city found.</CommandEmpty>
+                            <CommandGroup>
+                              {filteredCities.map((city, idx) => (
+                                <CommandItem
+                                  key={`${city.name}-${idx}`}
+                                  value={city.name}
+                                  onSelect={() => {
+                                    setSelectedCity(city.name);
+                                    setCityOpen(false);
+                                    setCitySearch("");
+                                  }}
+                                >
+                                  {city.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    )}
+                  </Popover>
+                </div>
 
                 <div className="flex items-start gap-3 pt-2">
                   <input className="mt-1 w-4 h-4 rounded border-border text-primary focus:ring-primary/20 accent-primary" id="terms" type="checkbox" required />
