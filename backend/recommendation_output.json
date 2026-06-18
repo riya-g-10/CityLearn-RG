@@ -1,0 +1,14 @@
+{
+    "similar_events_found": 10,
+    "match_confidence": "60.0%",
+    "best_historical_match": "62.7%",
+    "road_closure_probability": "40.0%",
+    "recommended_police_station": "City Market",
+    "recommended_corridor": "Mysore Road",
+    "common_cause": "construction",
+    "expected_congestion": "Moderate",
+    "recommended_barricades": 2,
+    "recommended_manpower": 5,
+    "suggested_diversion": "Consider diversion around Mysore Road",
+    "recommended_action": "Monitor traffic closely and keep response team ready."
+}
