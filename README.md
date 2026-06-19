@@ -1,4 +1,4 @@
-# 🚦 CityLearn
+#  CityLearn
 
 ### Cities Forget. CityLearn Remembers.
 
