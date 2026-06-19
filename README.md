@@ -20,13 +20,13 @@ Urban traffic authorities face recurring congestion caused by:
 
 Despite years of operational experience, traffic response strategies are often:
 
- Experience-driven
+ * Experience-driven
 
- Poorly documented
+ * Poorly documented
 
- Not reusable
+ * Not reusable
 
- Lacking post-event learning
+ * Lacking post-event learning
 
 As a result, cities repeatedly solve the same traffic problems without learning from previous incidents.
 
@@ -221,25 +221,6 @@ CityLearn builds connections between:
 * Closures
 * Outcomes
 
-Example:
-
-Political Rally
-
-↓
-
-Road Closure
-
-↓
-
-Congestion Increase
-
-↓
-
-Barricade Deployment
-
-↓
-
-Reduced Resolution Time
 
 ---
 
@@ -368,17 +349,17 @@ data/
 
 CityLearn helps traffic authorities:
 
- Forecast event-related congestion
+ * Forecast event-related congestion
 
- Improve resource deployment
+ * Improve resource deployment
 
- Reduce response time
+ * Reduce response time
 
- Reuse operational knowledge
+ * Reuse operational knowledge
 
- Learn from past incidents
+ * Learn from past incidents
 
- Make data-driven decisions
+ * Make data-driven decisions
 
 ---
 
