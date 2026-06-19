@@ -373,9 +373,3 @@ CityLearn helps traffic authorities:
 * Predictive City-Wide Traffic Simulation
 
 ---
-
-# 👥 Team
-
-Built for Smart City Traffic Intelligence Hackathon
-
-"Cities Forget. CityLearn Remembers."
