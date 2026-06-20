@@ -1,13 +1,14 @@
 // @ts-nocheck
 "use client";
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { loadUnifiedAnalysis } from "@/lib/analysis";
 
 export default function Page() {
-  const [metrics, setMetrics] = useState(null);
+  const [metrics, setMetrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const leafletMapInstanceRef = useRef<any>(null);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -36,6 +37,90 @@ export default function Page() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = () => setMapLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      try {
+        document.head.removeChild(link);
+        document.body.removeChild(script);
+      } catch (e) {}
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapLoaded || !metrics) return;
+
+    if (leafletMapInstanceRef.current) {
+      leafletMapInstanceRef.current.remove();
+      leafletMapInstanceRef.current = null;
+    }
+
+    const lat = metrics.active_latitude || 12.9716;
+    const lon = metrics.active_longitude || 77.5946;
+
+    const L = window.L;
+    if (!L) return;
+
+    const map = L.map("dashboard-map").setView([lat, lon], 13);
+    leafletMapInstanceRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const severityColor = metrics.active_severity === "High" ? "red" : "blue";
+    const markerIconUrl = severityColor === "red" 
+      ? "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png"
+      : "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png";
+
+    const customIcon = L.icon({
+      iconUrl: markerIconUrl,
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
+    marker.bindPopup(`
+      <div style="font-family: sans-serif; font-size: 11px; width: 140px;">
+        <b style="font-size: 12px; color: #1e293b;">${metrics.active_event_type || "Event"}</b><br>
+        <span style="color: #64748b;">Location: ${metrics.active_location || "Active Corridor"}</span><br>
+        <span style="color: ${severityColor === "red" ? "#dc2626" : "#2563eb"}; font-weight: bold;">Severity: ${metrics.active_severity || "Low"}</span>
+      </div>
+    `).openPopup();
+
+    const offsets = [
+      [0.003, -0.004, "Sensor Node A - Active"],
+      [-0.004, 0.005, "Sensor Node B - Active"],
+      [0.006, 0.002, "Sensor Node C - Standby"]
+    ];
+
+    offsets.forEach(([dLat, dLon, label]) => {
+      const sensorIcon = L.icon({
+        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png",
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [18, 30],
+        iconAnchor: [9, 30],
+        popupAnchor: [1, -30],
+        shadowSize: [30, 30]
+      });
+      L.marker([lat + dLat, lon + dLon], { icon: sensorIcon }).addTo(map).bindPopup(label);
+    });
+  }, [mapLoaded, metrics]);
+
   // Compute stats safely
   const totalEvents = metrics ? metrics.total_events : null;
   const eventsAnalyzed = metrics ? metrics.predictions_count : null;
@@ -51,6 +136,42 @@ export default function Page() {
   const recentActivities = metrics ? metrics.recent_activities : [];
   const congestionMatrix = metrics ? metrics.congestion_matrix : [];
 
+  if (!metrics && !isLoading) {
+    return (
+      <>
+        <style dangerouslySetInnerHTML={{ __html: `
+          .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+          }
+        ` }} />
+        <div className="space-y-8 max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[70vh]">
+          <div className="max-w-2xl text-center space-y-6 bg-white border border-border p-12 rounded-3xl shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-secondary to-accent"></div>
+            <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <span className="material-symbols-outlined text-primary text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>analytics</span>
+            </div>
+            <h1 className="font-merriweather text-3xl font-extrabold text-foreground leading-tight">
+              Activate Urban Intelligence
+            </h1>
+            <p className="font-sans text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              Welcome to <span className="font-croissant text-primary">CityLearn</span>. The dashboard is currently waiting for urban data. Run your first event neural synthesis to generate predictions, check congestion levels, and access resource planning tools.
+            </p>
+            <div className="pt-4">
+              <Link
+                href="/analysis-engine"
+                className="inline-flex items-center gap-2.5 px-8 py-4 bg-primary hover:bg-primary/95 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+              >
+                <span className="material-symbols-outlined text-lg">science</span>
+                Run Event Analysis Now
+              </Link>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -65,30 +186,6 @@ export default function Page() {
       
       <div className="space-y-8 max-w-7xl mx-auto">
         
-        {/* No-analysis CTA Banner — shown prominently above everything when no analysis done */}
-        {!metrics && !isLoading && (
-          <section className="relative rounded-2xl overflow-hidden border-2 border-dashed border-primary/40 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5 px-8 py-7 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-foreground">No Analysis Data Found</h2>
-                <p className="text-sm text-muted-foreground mt-0.5 max-w-lg">
-                  Your dashboard is empty. Run a neural synthesis on the <strong>Analysis Engine</strong> first to populate real predictions, congestion metrics, and event intelligence.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/analysis-engine"
-              className="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-sm shadow-sm hover:shadow transition-all active:scale-[0.98]"
-            >
-              <span className="material-symbols-outlined text-lg">science</span>
-              Run Analysis Now
-            </Link>
-          </section>
-        )}
-
         {/* Hero Section */}
         <section 
           id="dashboard-hero" 
@@ -216,15 +313,15 @@ export default function Page() {
           </div>
 
           {/* Interactive Map Section */}
-          <div className="md:col-span-6 bg-white border border-border rounded-2xl relative overflow-hidden min-h-[400px] shadow-sm">
-            <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+          <div className="md:col-span-6 bg-white border border-border rounded-2xl relative overflow-hidden min-h-[400px] shadow-sm flex flex-col">
+            <div className="absolute top-4 left-4 z-[500] flex flex-col gap-2">
               <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 border border-border shadow-sm">
                 <span className="material-symbols-outlined text-primary text-sm">location_on</span>
                 <span className="text-[9px] font-bold text-foreground tracking-wider uppercase font-sans">Active Event Hotspots</span>
               </div>
             </div>
             
-            <div className="absolute bottom-4 right-4 z-10">
+            <div className="absolute bottom-4 right-4 z-[500]">
               <div className="bg-white/95 backdrop-blur-md p-3 rounded-xl border border-border space-y-1.5 shadow-md">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 bg-destructive rounded-full"></div>
@@ -237,41 +334,7 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Map Background */}
-            <div 
-              className="w-full h-full grayscale-[0.3] contrast-[1.0] brightness-[1.02]" 
-              style={{
-                backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDql_4s-y4hmIfyXBeCLklYKjBnHbV78WsOags18kLSDyl6g6_RN0KprZpC9lKnbaIe73cLS9dWBse534ptnRdcAWSVd5_vVQdFlfGrg8Jg7ALmqEQfAoA42a7Vgtv1b0xpYZV89LD1Wc1VhCmwNLUYIcm6Y73grCY8SHH4-gmPBvPEUeeZ6TBiuTsWfnp74Uv_sru79clqMLYT8m2mFXc6XTukBw75gKKzv7bewRjdvQHkUF2WAjyz-eVZXTmCi870YfcYnjJEO5c')", 
-                backgroundSize: "cover", 
-                backgroundPosition: "center"
-              }}
-            />
-
-            {/* Fixed Static Overlay Markers */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <div className="w-3.5 h-3.5 bg-destructive rounded-full border-2 border-white shadow-sm"></div>
-              </div>
-              <div className="absolute top-2/3 left-1/4">
-                <div className="w-3 h-3 bg-primary rounded-full border-2 border-white shadow-sm"></div>
-              </div>
-              <div className="absolute bottom-1/4 right-1/3">
-                <div className="w-3 h-3 bg-primary rounded-full border-2 border-white shadow-sm"></div>
-              </div>
-            </div>
-
-            {/* Dynamic Event Hotspot */}
-            {metrics && metrics.active_location && metrics.active_location !== "Unknown" && (
-              <div className="absolute top-[45%] left-[50%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                <div className="relative flex items-center justify-center">
-                  <span className={`absolute inline-flex h-6 w-6 rounded-full animate-ping opacity-75 ${metrics.active_severity === 'High' ? 'bg-destructive' : 'bg-primary'}`}></span>
-                  <div className={`w-4 h-4 rounded-full border-2 border-white shadow-md relative z-10 ${metrics.active_severity === 'High' ? 'bg-destructive' : 'bg-primary'}`}></div>
-                </div>
-                <div className="bg-white/95 backdrop-blur-md px-2 py-0.5 rounded shadow border border-border mt-1.5 text-[9px] font-bold text-foreground max-w-[140px] truncate">
-                  {metrics.active_location}
-                </div>
-              </div>
-            )}
+            <div id="dashboard-map" className="w-full h-full flex-grow" style={{ minHeight: "400px", zIndex: 10 }} />
           </div>
 
           {/* Activity Feed Column */}

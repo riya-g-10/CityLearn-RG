@@ -151,6 +151,8 @@ export default function Page() {
   // 2. Loading and Results States
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const leafletMapInstanceRef = React.useRef(null);
 
   useEffect(() => {
     const runScript = () => {
@@ -185,6 +187,168 @@ export default function Page() {
     };
     runScript();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = () => setMapLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      try {
+        document.head.removeChild(link);
+        document.body.removeChild(script);
+      } catch (e) {}
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadStored = async () => {
+      try {
+        const stored = await loadUnifiedAnalysis();
+        if (stored) {
+          const predictions = stored.predictions;
+          const recommendations = stored.recommendations;
+          const topSimilarity = stored.similar_events?.[0]?.similarity_score || 0;
+          
+          setResults({
+            closure: predictions.road_closure_required,
+            closureProb: predictions.road_closure_probability,
+            priority: predictions.priority,
+            priorityProb: predictions.priority_probability,
+            manpowerScore: predictions.congestion_prediction * 10,
+            manpowerCount: recommendations.officer_deployment.officer_count,
+            similarityScore: topSimilarity,
+            latency: 0,
+            lat: stored.event_analysis?.input?.latitude,
+            lon: stored.event_analysis?.input?.longitude,
+            suggestedDiversion: (() => {
+              const div = recommendations.diversion_strategy;
+              if (!div) return "No diversion required.";
+              if (typeof div === "string") return div;
+              if (div.diversion_description) return div.diversion_description;
+              if (div.primary_route) {
+                const alts = div.alternate_routes ? ` · Alternates: ${Array.isArray(div.alternate_routes) ? div.alternate_routes.join(", ") : div.alternate_routes}` : "";
+                return `Primary: ${div.primary_route}${alts}`;
+              }
+              if (div.recommended_corridor) return `Via ${div.recommended_corridor}`;
+              if (div.routes && div.routes.length > 0) {
+                return `${div.routes[0]}${div.reasoning ? ` (${div.reasoning})` : ''}`;
+              }
+              return JSON.stringify(div).slice(0, 120);
+            })(),
+            recommendedAction: (() => {
+              const action = recommendations.officer_deployment?.recommended_action
+                || recommendations.officer_deployment?.action
+                || recommendations.recommended_action
+                || stored.lessons_learned
+                || recommendations.barricade_plan?.strategy
+                || null;
+              if (!action) return "Monitor traffic flow and maintain situational awareness.";
+              if (typeof action === "string") return action;
+              return JSON.stringify(action).slice(0, 200);
+            })(),
+          });
+          
+          const lastEventRaw = localStorage.getItem("last_analyzed_event");
+          if (lastEventRaw) {
+            const lastEvent = JSON.parse(lastEventRaw);
+            if (lastEvent.event_type) setEventType(lastEvent.event_type);
+            if (lastEvent.duration) setDuration(lastEvent.duration);
+            if (lastEvent.closure_status) setClosureStatus(lastEvent.closure_status);
+            if (lastEvent.attendance !== undefined) {
+              const att = lastEvent.attendance;
+              if (att <= 0) setAttendance(0);
+              else if (att <= 1000) setAttendance(att / 1000);
+              else if (att <= 10000) setAttendance(1 + (att - 1000) / 9000);
+              else if (att <= 50000) setAttendance(2 + (att - 10000) / 40000);
+              else if (att <= 100000) setAttendance(3 + (att - 50000) / 50000);
+              else setAttendance(4);
+            }
+            if (lastEvent.city) setSelectedCity(lastEvent.city);
+            if (lastEvent.country) {
+              const matchedCountry = Country.getAllCountries().find(c => c.name === lastEvent.country);
+              if (matchedCountry) {
+                setSelectedCountryCode(matchedCountry.isoCode);
+                const matchedState = State.getStatesOfCountry(matchedCountry.isoCode).find(s => s.name === lastEvent.state);
+                if (matchedState) {
+                  setSelectedStateCode(matchedState.isoCode);
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load stored analysis", err);
+      }
+    };
+    loadStored();
+  }, []);
+
+  useEffect(() => {
+    if (!mapLoaded || !results) return;
+
+    if (leafletMapInstanceRef.current) {
+      leafletMapInstanceRef.current.remove();
+      leafletMapInstanceRef.current = null;
+    }
+
+    const lat = results.lat || 12.9716;
+    const lon = results.lon || 77.5946;
+
+    const L = window.L;
+    if (!L) return;
+
+    const map = L.map("analysis-map").setView([lat, lon], 13);
+    leafletMapInstanceRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const customIcon = L.icon({
+      iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
+    marker.bindPopup(`<b>${eventType} Hotspot</b><br>${location}`).openPopup();
+
+    if (results.closure) {
+      L.circle([lat, lon], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.2,
+        radius: 800
+      }).addTo(map);
+      
+      const divLat = lat + 0.004;
+      const divLon = lon + 0.004;
+      
+      const divIcon = L.icon({
+        iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+      
+      const divMarker = L.marker([divLat, divLon], { icon: divIcon }).addTo(map);
+      divMarker.bindPopup(`<b>Suggested Diversion Route</b><br>Rerouting traffic dynamically.`);
+    }
+  }, [mapLoaded, results]);
 
   // Submit handler to call our real backend API
   const handleSubmit = async () => {
@@ -270,23 +434,27 @@ export default function Page() {
         manpowerCount: recommendations.officer_deployment.officer_count,
         similarityScore: topSimilarity,
         latency: latencyMs,
+        lat: finalLat,
+        lon: finalLon,
         suggestedDiversion: (() => {
           const div = recommendations.diversion_strategy;
           if (!div) return "No diversion required.";
           if (typeof div === "string") return div;
-          // Handle object form: { primary_route, alternate_routes, diversion_description, etc. }
           if (div.diversion_description) return div.diversion_description;
           if (div.primary_route) {
             const alts = div.alternate_routes ? ` · Alternates: ${Array.isArray(div.alternate_routes) ? div.alternate_routes.join(", ") : div.alternate_routes}` : "";
             return `Primary: ${div.primary_route}${alts}`;
           }
           if (div.recommended_corridor) return `Via ${div.recommended_corridor}`;
+          if (div.routes && div.routes.length > 0) {
+            return `${div.routes[0]}${div.reasoning ? ` (${div.reasoning})` : ''}`;
+          }
           return JSON.stringify(div).slice(0, 120);
         })(),
         recommendedAction: (() => {
-          // Priority: officer_deployment.recommended_action > lessons_learned > barricade_plan
           const action = recommendations.officer_deployment?.recommended_action
             || recommendations.officer_deployment?.action
+            || recommendations.recommended_action
             || analysisResponse.lessons_learned
             || recommendations.barricade_plan?.strategy
             || null;
@@ -668,6 +836,12 @@ export default function Page() {
                               {results.recommendedAction || "Monitor traffic flow and maintain situational awareness."}
                             </span>
                           </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col py-1.5 space-y-1.5">
+                        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Operational Area Map</span>
+                        <div className="p-1 bg-slate-50 border border-border rounded-xl">
+                          <div id="analysis-map" className="w-full rounded-lg" style={{ height: "200px", zIndex: 10 }} />
                         </div>
                       </div>
                     </div>

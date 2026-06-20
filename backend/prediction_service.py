@@ -25,6 +25,9 @@ MODEL_FEATURES = [
 
 class PredictionService:
     def __init__(self, dataset_path: str = "citylearn_cleaned_data.csv"):
+        if not os.path.isabs(dataset_path):
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            dataset_path = os.path.join(base_dir, dataset_path)
         self.dataset_path = dataset_path
         self.closure_model: Optional[Pipeline] = None
         self.priority_model: Optional[Pipeline] = None

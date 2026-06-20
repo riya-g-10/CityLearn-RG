@@ -79,6 +79,41 @@ def run_tests():
         "closure_status": "No Closure"
     }
 
+    # Case 4: Attendance: 0 — should recommend 0 officers
+    payload_case0 = {
+        "event_type": "Public Assembly",
+        "event_cause": "Others",
+        "latitude": 12.9716,
+        "longitude": 77.5946,
+        "attendance": 0,
+        "duration": 30,
+        "start_datetime": "2026-06-19T12:00:00.000Z",
+        "corridor": "Bengaluru, Karnataka, India",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "country": "India",
+        "requires_road_closure": False,
+        "closure_status": "No Closure"
+    }
+
+    # Case 5: Attendance: 100000 — base 25 officers (25 per 100k attendees)
+    payload_case100k = {
+        "event_type": "Public Assembly",
+        "event_cause": "Others",
+        "latitude": 12.9716,
+        "longitude": 77.5946,
+        "attendance": 100000,
+        "duration": 180,
+        "start_datetime": "2026-06-19T12:00:00.000Z",
+        "corridor": "Bengaluru, Karnataka, India",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "country": "India",
+        "requires_road_closure": False,
+        "closure_status": "No Closure",
+        "priority": "Low"
+    }
+
     # Query Case 1
     print("\n--- QUERYING CASE 1 (Attendance: 1000, Duration: 30) ---")
     res1 = requests.post(f"{base_url}/predict/manpower", json=payload_case1).json()
@@ -97,10 +132,24 @@ def run_tests():
     print("Manpower Score:", res3["manpower_diversion_score"])
     print("Recommended Officers:", res3["recommended_manpower"])
 
+    # Query Case 0
+    print("\n--- QUERYING CASE 0 (Attendance: 0) ---")
+    res0 = requests.post(f"{base_url}/predict/manpower", json=payload_case0).json()
+    print("Manpower Score:", res0["manpower_diversion_score"])
+    print("Recommended Officers:", res0["recommended_manpower"])
+
+    # Query Case 100k
+    print("\n--- QUERYING CASE 100k (Attendance: 100000) ---")
+    res100k = requests.post(f"{base_url}/predict/manpower", json=payload_case100k).json()
+    print("Manpower Score:", res100k["manpower_diversion_score"])
+    print("Recommended Officers:", res100k["recommended_manpower"])
+
     # Verify logic changes
     assert res1["manpower_diversion_score"] < res2["manpower_diversion_score"], "Error: Manpower score did not increase with attendance and duration!"
     assert res1["recommended_manpower"] < res2["recommended_manpower"], "Error: Recommended officers count did not increase with attendance!"
     assert res3["manpower_diversion_score"] < res2["manpower_diversion_score"], "Error: Manpower score did not decrease for a far location!"
+    assert res0["recommended_manpower"] == 0, f"Error: Zero attendance should recommend 0 officers, got {res0['recommended_manpower']}!"
+    assert res100k["recommended_manpower"] == 25, f"Error: 100k attendance should recommend 25 base officers, got {res100k['recommended_manpower']}!"
     
     print("\n" + "="*40)
     print("=== ALL IMPLEMENTATION TESTS PASSED SUCCESSFULLY! ===")

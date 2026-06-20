@@ -370,8 +370,11 @@ def build_recommendations(payload: EventInput, predictions: Dict[str, Any], simi
     if durations:
         avg_resolution = sum(durations) / len(durations)
 
-    officers = math.ceil(attendance / 5000) + (2 if closure_required else 0) + (2 if high_priority else 0) + (1 if avg_resolution > 150 else 0)
-    officers = max(1, officers)
+    if attendance == 0:
+        officers = 0
+    else:
+        officers = math.ceil(attendance / 4000) + (2 if closure_required else 0) + (2 if high_priority else 0) + (1 if avg_resolution > 150 else 0)
+        officers = max(1, officers)
     corridor = payload.corridor if payload.corridor and payload.corridor != "Unknown" else (similar_events[0]["location"] if similar_events else "input corridor")
     zone = payload.zone if payload.zone and payload.zone != "Unknown" else corridor
     similar_count = len(similar_events)
@@ -380,6 +383,8 @@ def build_recommendations(payload: EventInput, predictions: Dict[str, Any], simi
     barricade_required = closure_required or similar_closures > (similar_count / 2 if similar_count else 0)
     diversion_required = closure_required or predictions["congestion_prediction"] >= 6.5
     route = f"Divert through adjacent approaches around {corridor}" if diversion_required else f"Keep traffic on {corridor} with signal monitoring"
+
+    recommended_action = f"Deploy {officers} officers to {zone} to manage crowd safety and set up barricades at {corridor}." if barricade_required else f"Deploy {officers} officers to {zone} for traffic monitoring and crowd control."
 
     return {
         "officer_deployment": {
@@ -406,7 +411,8 @@ def build_recommendations(payload: EventInput, predictions: Dict[str, Any], simi
                 f"{predictions['congestion_prediction']}/10 and predicted resolution {predictions['resolution_prediction']} minutes."
             ),
         },
-        "impact_score": int(min(100, round(predictions["congestion_prediction"] * 8 + (20 if closure_required else 0) + min(20, attendance / 5000)))),
+        "recommended_action": recommended_action,
+        "impact_score": int(min(100, round(predictions["congestion_prediction"] * 8 + (20 if closure_required else 0) + min(20, attendance / 4000)))),
         "efficiency_gains": int(min(100, round(predictions["reliability_score"] / 5 + officers))),
     }
 
@@ -445,6 +451,8 @@ def build_dashboard_metrics(payload: EventInput, predictions: Dict[str, Any], si
         "active_location": payload.corridor,
         "active_severity": predictions["severity_level"],
         "active_congestion": predictions["congestion_prediction"],
+        "active_latitude": payload.latitude,
+        "active_longitude": payload.longitude,
         "resolved_events_count": resolved_count,
         "avg_resolution_time": round(avg_resolution, 1),
         "high_risk_zones": high_risk_zones,
@@ -763,8 +771,11 @@ def predict_manpower(payload: EventInput):
 
         # Personnel recommendation
         attendance, duration = get_attendance_and_duration(payload)
-        recommended_manpower = math.ceil(attendance / 5000) + (2 if rc else 0) + (2 if prio_cleaned == 'high' else 0)
-        recommended_manpower = max(1, recommended_manpower)
+        if attendance == 0:
+            recommended_manpower = 0
+        else:
+            recommended_manpower = math.ceil(attendance / 4000) + (2 if rc else 0) + (2 if prio_cleaned == 'high' else 0)
+            recommended_manpower = max(1, recommended_manpower)
 
         # Suggested diversion
         # Override corridor name with structured location if available
@@ -1190,8 +1201,11 @@ def get_strategic_recommendations(payload: EventInput):
                 
         attendance, duration = get_attendance_and_duration(payload)
         
-        officers = math.ceil(attendance / 5000) + (2 if rc else 0) + (2 if prio == "High" else 0)
-        officers = max(1, officers)
+        if attendance == 0:
+            officers = 0
+        else:
+            officers = math.ceil(attendance / 4000) + (2 if rc else 0) + (2 if prio == "High" else 0)
+            officers = max(1, officers)
         
         zone = payload.zone if payload.zone and payload.zone != "Unknown" else payload.corridor
         corridor = payload.corridor if payload.corridor and payload.corridor != "Unknown" else payload.zone

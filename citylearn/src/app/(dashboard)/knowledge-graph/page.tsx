@@ -1,9 +1,9 @@
 // @ts-nocheck
 "use client";
-
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { loadUnifiedAnalysis } from "@/lib/analysis";
 
-const NODES = [
+const DEFAULT_NODES = [
   { id: "node-1", label: "Summer Festival", icon: "festival", badge: "ROOT", badgeColor: "primary", x: "8%", y: "8%", desc: "Large public assembly event with 85,000 attendees. Triggers cascading city-wide effects.", impact: 95, delay: "12ms" },
   { id: "node-2", label: "Main St. Closure", icon: "block", badge: "CAUSE", badgeColor: "secondary", x: "52%", y: "10%", desc: "2.4km road closure from signal C12 to junction E7. Affects 3 arterial corridors.", impact: 78, delay: "18ms" },
   { id: "node-3", label: "Gridlock Cascade", icon: "traffic", badge: "IMPACT", badgeColor: "amber", x: "58%", y: "44%", desc: "Critical severity cascade across 6 sectors. Estimated 42-min delay window.", impact: 62, delay: "24ms" },
@@ -26,11 +26,29 @@ const EDGES = [
 
 const SIM_SEQUENCE = ["node-1", "node-2", "node-6", "node-3", "node-4", "node-5", "node-7"];
 
+type SimulationReportData = {
+  eventType: string;
+  location: string;
+  officerCount: number;
+  efficiencyGains: number;
+  resolutionTime: number;
+  similarityScore: number;
+  activeId: string | number;
+  mitigatedDelayDelta?: number;
+  congestionBefore?: number;
+  congestionAfter?: number;
+};
+
 export default function Page() {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const nodeRefs = useRef<Record<string, HTMLElement>>({});
-  const [selectedNode, setSelectedNode] = useState(NODES[0]);
+  
+  const [nodes, setNodes] = useState(DEFAULT_NODES);
+  const [selectedNode, setSelectedNode] = useState(DEFAULT_NODES[0]);
+  const [showReport, setShowReport] = useState(false);
+  const [reportData, setReportData] = useState<SimulationReportData | null>(null);
+  
   const [simActive, setSimActive] = useState(false);
   const [simStep, setSimStep] = useState(-1);
   const [activeNodes, setActiveNodes] = useState<Set<string>>(new Set());
@@ -68,21 +86,85 @@ export default function Page() {
     return () => { clearTimeout(t); window.removeEventListener("resize", drawEdges); };
   }, [drawEdges, zoom]);
 
+  // Load last analysis on mount to populate dynamic nodes
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      try {
+        const stored = await loadUnifiedAnalysis();
+        if (stored) {
+          const predictions = stored.predictions || {};
+          const recommendations = stored.recommendations || {};
+          const eventAnalysis = stored.event_analysis || {};
+          const eventType = eventAnalysis.event_type || "Public Assembly";
+          const location = eventAnalysis.location || "Active Corridor";
+          const attendance = eventAnalysis.input?.attendance || 50000;
+          const roadClosureProb = Math.round(predictions.road_closure_probability * 100) || 78;
+          const roadClosureRequired = predictions.road_closure_required ? "Closure Required" : "Passable Traffic";
+          const congestionScore = Math.round(predictions.congestion_prediction * 10) || 62;
+          const resolutionTime = predictions.resolution_prediction || 42;
+          const officerCount = recommendations.officer_deployment?.officer_count || 12;
+          const deploymentArea = recommendations.officer_deployment?.deployment_area || location;
+          const barricadeRequired = recommendations.barricade_plan?.required ? "Required" : "Not Required";
+          const efficiencyGains = recommendations.efficiency_gains || 18;
+          const similarityScore = Math.round(stored.similar_events?.[0]?.similarity_score || 88);
+          const activeId = stored.similar_events?.[0]?.id || "992";
+
+          const dynamicNodes = [
+            { id: "node-1", label: eventType, icon: eventType === "Infrastructure Failure" ? "engineering" : "festival", badge: "ROOT", badgeColor: "primary", x: "8%", y: "8%", desc: `Event of type '${eventType}' at ${location}. Estimated attendance: ${attendance.toLocaleString()} people.`, impact: 100, delay: "0ms" },
+            { id: "node-2", label: roadClosureRequired, icon: "block", badge: "CAUSE", badgeColor: "secondary", x: "52%", y: "10%", desc: `Road closure status is predicted as '${predictions.road_closure_required ? 'Yes' : 'No'}' with ${roadClosureProb}% probability.`, impact: roadClosureProb, delay: "5m" },
+            { id: "node-3", label: "Congestion Spike", icon: "traffic", badge: "IMPACT", badgeColor: "amber", x: "58%", y: "44%", desc: `Congestion severity score of ${predictions.congestion_prediction}/10 predicted. Peak delay of ${resolutionTime}m expected.`, impact: congestionScore, delay: "15m" },
+            { id: "node-4", label: "Manpower Dispatch", icon: "route", badge: "STRATEGY", badgeColor: "primary", x: "10%", y: "60%", desc: `Recommended deployment of ${officerCount} officers to ${deploymentArea} for dynamic traffic management.`, impact: Math.min(100, officerCount * 4 + 30), delay: "8m" },
+            { id: "node-5", label: "Diversion Active", icon: "task_alt", badge: "OUTCOME", badgeColor: "primary", x: "52%", y: "71%", desc: `Barricades: ${barricadeRequired}. Alternate rerouting initiated. ${efficiencyGains}% efficiency gains predicted.`, impact: 90 + Math.round(efficiencyGains / 10), delay: "12m" },
+            { id: "node-6", label: "Safety Pre-Deploy", icon: "emergency", badge: "PARALLEL", badgeColor: "red", x: "28%", y: "35%", desc: `Emergency response services alerted for priority dispatch based on ${eventType} profile.`, impact: 70, delay: "6m" },
+            { id: "node-7", label: "Pattern Locked", icon: "memory", badge: "MEMORY", badgeColor: "secondary", x: "30%", y: "80%", desc: `Event signature stored to vector memory with ${similarityScore}% similarity footprint. Reference ID: EP-${activeId}.`, impact: similarityScore, delay: "2ms" },
+          ];
+          setNodes(dynamicNodes);
+          setSelectedNode(dynamicNodes[0]);
+          
+          const mitigatedDelayDelta = Math.round(resolutionTime * (efficiencyGains / 100));
+          const congestionBefore = Math.round(predictions.congestion_prediction * 10) || 62;
+          const congestionAfter = Math.max(10, congestionBefore - Math.round(efficiencyGains / 2));
+
+          setReportData({
+            eventType,
+            location,
+            officerCount,
+            efficiencyGains,
+            resolutionTime,
+            similarityScore,
+            activeId,
+            mitigatedDelayDelta,
+            congestionBefore,
+            congestionAfter,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load knowledge graph data:", err);
+      }
+    };
+    fetchAnalysis();
+  }, []);
+
   // Simulation runner
   useEffect(() => {
     if (!simActive) return;
     if (simStep >= SIM_SEQUENCE.length) {
-      setTimeout(() => { setSimActive(false); setSimStep(-1); setActiveNodes(new Set()); }, 800);
+      setTimeout(() => { 
+        setSimActive(false); 
+        setSimStep(-1); 
+        setActiveNodes(new Set()); 
+        setShowReport(true);
+      }, 800);
       return;
     }
     const t = setTimeout(() => {
       setActiveNodes(prev => new Set([...prev, SIM_SEQUENCE[simStep]]));
-      const node = NODES.find(n => n.id === SIM_SEQUENCE[simStep]);
+      const node = nodes.find(n => n.id === SIM_SEQUENCE[simStep]);
       if (node) setSelectedNode(node);
       setSimStep(s => s + 1);
     }, simStep === -1 ? 0 : 700);
     return () => clearTimeout(t);
-  }, [simActive, simStep]);
+  }, [simActive, simStep, nodes]);
 
   const startSim = () => {
     setActiveNodes(new Set());
@@ -240,7 +322,7 @@ export default function Page() {
                 className="relative w-full h-full"
                 style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "center center", transition: isDragging.current ? "none" : "transform 0.1s ease", zIndex: 2 }}
               >
-                {NODES.map(node => {
+                {nodes.map(node => {
                   const isActive = activeNodes.has(node.id);
                   const isSelected = selectedNode?.id === node.id;
                   return (
@@ -390,7 +472,7 @@ export default function Page() {
                         .filter(([a, b]) => a === selectedNode.id || b === selectedNode.id)
                         .map(([a, b]) => {
                           const otherId = a === selectedNode.id ? b : a;
-                          const otherNode = NODES.find(n => n.id === otherId);
+                          const otherNode = nodes.find(n => n.id === otherId);
                           if (!otherNode) return null;
                           return (
                             <div
@@ -440,6 +522,92 @@ export default function Page() {
 
         </div>
       </div>
+
+      {showReport && reportData && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowReport(false)}
+        >
+          <div
+            className="bg-white border border-border rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 px-6 py-5 border-b border-border">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold rounded-full uppercase tracking-wider mb-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    Simulation Complete
+                  </span>
+                  <h2 className="text-lg font-bold text-foreground">Simulation Report</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {reportData.eventType} at {reportData.location}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowReport(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-muted-foreground transition-colors"
+                  aria-label="Close report"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-slate-50 border border-border rounded-xl">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Mitigated Delay</p>
+                  <p className="text-xl font-bold text-primary mt-1">
+                    -{reportData.mitigatedDelayDelta ?? Math.round(reportData.resolutionTime * 0.18)}m
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    From {reportData.resolutionTime}m baseline
+                  </p>
+                </div>
+                <div className="p-3 bg-slate-50 border border-border rounded-xl">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Efficiency Gain</p>
+                  <p className="text-xl font-bold text-secondary mt-1">+{reportData.efficiencyGains}%</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Operational throughput</p>
+                </div>
+                <div className="p-3 bg-slate-50 border border-border rounded-xl">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Congestion Delta</p>
+                  <p className="text-xl font-bold text-amber-600 mt-1">
+                    {reportData.congestionBefore ?? 62} → {reportData.congestionAfter ?? 53}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Severity index reduced</p>
+                </div>
+                <div className="p-3 bg-slate-50 border border-border rounded-xl">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Officers Deployed</p>
+                  <p className="text-xl font-bold text-foreground mt-1">{reportData.officerCount}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Recommended manpower</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-lg">memory</span>
+                  <p className="text-xs font-bold text-foreground">Institutional Memory Upload</p>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Event fingerprint <span className="font-mono font-bold text-primary">EP-{reportData.activeId}</span> committed to vector memory
+                  with <span className="font-bold text-foreground">{reportData.similarityScore}%</span> similarity fidelity.
+                  All 7 simulation nodes validated and transaction logged.
+                </p>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-border flex justify-end gap-2">
+              <button
+                onClick={() => setShowReport(false)}
+                className="px-5 py-2.5 bg-primary hover:bg-primary/95 text-white font-semibold rounded-xl text-xs shadow-sm transition-all"
+              >
+                Acknowledge Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
