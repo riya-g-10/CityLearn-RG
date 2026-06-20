@@ -287,57 +287,45 @@ This creates a self-improving traffic intelligence platform.
 
 #  Project Structure
 
-This project is organized as a full-stack Next.js + FastAPI application. The backend powers predictive operational intelligence using trained CatBoost models, similarity retrieval, recommendation engines, and feature engineering pipelines. The frontend provides an interactive dashboard for event analysis, forecasting, strategic recommendations, and institutional memory visualization.
+backend/
 
-```text
-CityLearn-RG/
-├── backend/                        # FastAPI Python Backend
-│   ├── app/
-│   │   ├── main.py                 # Core API endpoints (/analyze-event)
-│   │   └── schemas.py              # Pydantic input schemas (EventInput)
-│   │
-│   ├── ml_artifacts/               # Generated ML model artifacts
-│   │   ├── closure_model.joblib    # Road closure prediction model
-│   │   ├── priority_model.joblib   # Event priority prediction model
-│   │   └── ordinal_encoder.joblib  # Feature encoder for categorical inputs
-│   │
-│   ├── data/
-│   │   └── fingerprint_store.pkl   # Historical event similarity index
-│   │
-│   ├── main.py                     # Backend service entry point
-│   ├── prediction_service.py       # CatBoost inference layer
-│   ├── similarity_service.py       # Historical case retrieval engine
-│   ├── recommendation_service.py   # Diversion & response recommendation engine
-│   ├── fingerprint_engine.py       # Feature engineering pipeline
-│   └── citylearn_cleaned_data.csv  # Training & analytics dataset
-│
-├── citylearn/                      # Next.js 16 + TypeScript Frontend
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── (auth)/             # Login & Registration flows
-│   │   │   ├── (dashboard)/        # Operational intelligence modules
-│   │   │   │   ├── dashboard/
-│   │   │   │   ├── analysis-engine/
-│   │   │   │   ├── predictive-intel/
-│   │   │   │   ├── strategic-recommendations/
-│   │   │   │   └── institutional-memory/
-│   │   │   └── layout.tsx
-│   │   ├── components/
-│   │   └── lib/
-│   │       └── analysis.ts
-│   │
-│   ├── .env.local                 # Frontend environment configuration
-│   ├── package.json
-│   └── tailwind.config.ts
-│
-├── ml/                             # Model training pipeline
-│   ├── preprocess.py
-│   └── train.py                    # Generates backend/ml_artifacts/*.joblib
-│
-└── docs/                           # Architecture diagrams & documentation
-```
+├── main.py
 
+├── routes/
 
+├── models/
+
+├── database.py
+
+│
+
+ai/
+
+├── embedding_service.py
+
+├── similarity_service.py
+
+├── prediction_service.py
+
+│
+
+frontend/
+
+├── dashboard/
+
+├── maps/
+
+├── analytics/
+
+│
+
+data/
+
+├── citylearn_cleaned_data.csv
+
+├── citylearn_embeddings.pkl
+
+├── recommendations.json
 
 ---
 

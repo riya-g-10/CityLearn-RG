@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { loadUnifiedAnalysis } from "@/lib/analysis";
 
 export default function Page() {
@@ -64,6 +65,30 @@ export default function Page() {
       
       <div className="space-y-8 max-w-7xl mx-auto">
         
+        {/* No-analysis CTA Banner — shown prominently above everything when no analysis done */}
+        {!metrics && !isLoading && (
+          <section className="relative rounded-2xl overflow-hidden border-2 border-dashed border-primary/40 bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5 px-8 py-7 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>bolt</span>
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">No Analysis Data Found</h2>
+                <p className="text-sm text-muted-foreground mt-0.5 max-w-lg">
+                  Your dashboard is empty. Run a neural synthesis on the <strong>Analysis Engine</strong> first to populate real predictions, congestion metrics, and event intelligence.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/analysis-engine"
+              className="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-sm shadow-sm hover:shadow transition-all active:scale-[0.98]"
+            >
+              <span className="material-symbols-outlined text-lg">science</span>
+              Run Analysis Now
+            </Link>
+          </section>
+        )}
+
         {/* Hero Section */}
         <section 
           id="dashboard-hero" 
@@ -82,10 +107,10 @@ export default function Page() {
             <p className="font-sans text-xs md:text-sm text-muted-foreground max-w-lg leading-relaxed">
               Advanced urban intelligence mapping trillions of historical data points to predict and optimize city infrastructure.
             </p>
-            {!metrics && !isLoading && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold rounded-full uppercase tracking-wider animate-pulse mt-2">
-                <span className="material-symbols-outlined text-[12px]">info</span>
-                Run the analysis first
+            {metrics && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 border border-green-200 text-green-700 text-[11px] font-bold rounded-full uppercase tracking-wider mt-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block"></span>
+                Analysis Active — Dashboard Live
               </div>
             )}
           </div>

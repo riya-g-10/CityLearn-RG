@@ -3,10 +3,13 @@ import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import { hashPassword } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { createUser, findUserByEmail, toPublicUser } from "@/lib/users";
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
+    const db = await connectDB();
+    const isFallback = !!(db && (db as any).isFallback);
+
     const body = await request.json();
     const email = typeof body.email === "string" ? body.email : "";
     const password = typeof body.password === "string" ? body.password : "";
@@ -27,6 +30,47 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
+    if (isFallback) {
+      // Offline/Local Fallback Logic
+      const existingUser = findUserByEmail(normalizedEmail);
+      if (existingUser) {
+        return NextResponse.json(
+          { success: false, message: "An account with this email already exists." },
+          { status: 409 }
+        );
+      }
+
+      const newUser = createUser({
+        email: normalizedEmail,
+        password: password,
+        name: name.trim(),
+        department: typeof body.department === "string" ? body.department : undefined,
+        role: typeof body.role === "string" ? body.role : undefined,
+        country: typeof body.country === "string" ? body.country : undefined,
+        state: typeof body.state === "string" ? body.state : undefined,
+        city: typeof body.city === "string" ? body.city : undefined,
+      });
+
+      const cookieStore = await cookies();
+      cookieStore.set("userId", newUser.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Account created successfully (offline fallback).",
+          user: toPublicUser(newUser),
+        },
+        { status: 201 }
+      );
+    }
+
+    // Online Mongoose Logic
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json(
@@ -46,6 +90,7 @@ export async function POST(request: NextRequest) {
       state: typeof body.state === "string" ? body.state : undefined,
       city: typeof body.city === "string" ? body.city : undefined,
     });
+
 
     // Set cookie session
     const cookieStore = await cookies();

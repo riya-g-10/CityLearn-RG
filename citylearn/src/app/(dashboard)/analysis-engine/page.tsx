@@ -269,7 +269,31 @@ export default function Page() {
         manpowerScore: predictions.congestion_prediction * 10,
         manpowerCount: recommendations.officer_deployment.officer_count,
         similarityScore: topSimilarity,
-        latency: latencyMs
+        latency: latencyMs,
+        suggestedDiversion: (() => {
+          const div = recommendations.diversion_strategy;
+          if (!div) return "No diversion required.";
+          if (typeof div === "string") return div;
+          // Handle object form: { primary_route, alternate_routes, diversion_description, etc. }
+          if (div.diversion_description) return div.diversion_description;
+          if (div.primary_route) {
+            const alts = div.alternate_routes ? ` · Alternates: ${Array.isArray(div.alternate_routes) ? div.alternate_routes.join(", ") : div.alternate_routes}` : "";
+            return `Primary: ${div.primary_route}${alts}`;
+          }
+          if (div.recommended_corridor) return `Via ${div.recommended_corridor}`;
+          return JSON.stringify(div).slice(0, 120);
+        })(),
+        recommendedAction: (() => {
+          // Priority: officer_deployment.recommended_action > lessons_learned > barricade_plan
+          const action = recommendations.officer_deployment?.recommended_action
+            || recommendations.officer_deployment?.action
+            || analysisResponse.lessons_learned
+            || recommendations.barricade_plan?.strategy
+            || null;
+          if (!action) return "Monitor traffic flow and maintain situational awareness.";
+          if (typeof action === "string") return action;
+          return JSON.stringify(action).slice(0, 200);
+        })(),
       });
     } catch (err) {
       console.error(err);
@@ -624,13 +648,27 @@ export default function Page() {
                         <span className="text-muted-foreground text-xs">Recommended Manpower</span>
                         <span className="font-mono font-bold text-foreground">{results.manpowerCount} Officers</span>
                       </div>
-                      <div className="flex flex-col border-b border-border/50 py-1.5 space-y-1">
-                        <span className="text-muted-foreground text-xs">Suggested Diversion</span>
-                        <span className="font-semibold text-foreground">{results.suggestedDiversion}</span>
+                      <div className="flex flex-col py-1.5 space-y-1.5">
+                        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Suggested Diversion</span>
+                        <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <span className="material-symbols-outlined text-blue-500 text-base mt-0.5 shrink-0">alt_route</span>
+                            <span className="text-xs text-blue-800 leading-relaxed font-medium">
+                              {results.suggestedDiversion || "No diversion required for this event type."}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-col py-1.5 space-y-1">
-                        <span className="text-muted-foreground text-xs">Emergency Action Action Plan</span>
-                        <span className="text-xs text-muted-foreground leading-relaxed italic">{results.recommendedAction}</span>
+                      <div className="flex flex-col py-1.5 space-y-1.5">
+                        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Emergency Action Plan</span>
+                        <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <span className="material-symbols-outlined text-amber-600 text-base mt-0.5 shrink-0">emergency</span>
+                            <span className="text-xs text-amber-900 leading-relaxed italic">
+                              {results.recommendedAction || "Monitor traffic flow and maintain situational awareness."}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

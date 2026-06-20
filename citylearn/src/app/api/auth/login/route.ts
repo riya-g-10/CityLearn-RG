@@ -3,10 +3,13 @@ import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import { verifyPassword } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { findUserByEmail, verifyPassword as verifyLocalPassword, toPublicUser } from "@/lib/users";
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
+    const db = await connectDB();
+    const isFallback = !!(db && (db as any).isFallback);
+
     const body = await request.json();
     const email = typeof body.email === "string" ? body.email : "";
     const password = typeof body.password === "string" ? body.password : "";
@@ -19,7 +22,46 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
+    if (isFallback) {
+      // Offline/Local Fallback Logic
+      const user = findUserByEmail(normalizedEmail);
+      if (!user) {
+        return NextResponse.json(
+          { success: false, message: "Account not found. Please register first." },
+          { status: 404 }
+        );
+      }
+
+      const passwordValid = verifyLocalPassword(password, user.passwordHash, user.passwordSalt);
+      if (!passwordValid) {
+        return NextResponse.json(
+          { success: false, message: "Incorrect password. Please try again." },
+          { status: 401 }
+        );
+      }
+
+      const cookieStore = await cookies();
+      cookieStore.set("userId", user.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Login successful (offline fallback).",
+          user: toPublicUser(user),
+        },
+        { status: 200 }
+      );
+    }
+
+    // Online Mongoose Logic
     const user = await User.findOne({ email: normalizedEmail });
+
 
     if (!user) {
       return NextResponse.json(
