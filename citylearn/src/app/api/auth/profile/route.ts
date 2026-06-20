@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
 import { cookies } from "next/headers";
+import { findUserById, updateUser, deleteUser, findUserByEmail, toPublicUser } from "@/lib/users";
 
 export async function GET() {
   try {
-    await connectDB();
+    const db = await connectDB();
+    const isFallback = !!(db && (db as any).isFallback);
+
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
 
@@ -14,6 +17,20 @@ export async function GET() {
         { success: false, message: "Not authenticated" },
         { status: 401 }
       );
+    }
+
+    if (isFallback) {
+      const user = findUserById(userId);
+      if (!user) {
+        return NextResponse.json(
+          { success: false, message: "User not found" },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({
+        success: true,
+        user: toPublicUser(user),
+      });
     }
 
     const user = await User.findById(userId);
@@ -50,7 +67,9 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    await connectDB();
+    const db = await connectDB();
+    const isFallback = !!(db && (db as any).isFallback);
+
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
 
@@ -72,6 +91,40 @@ export async function PUT(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
+    if (isFallback) {
+      const emailOwner = findUserByEmail(normalizedEmail);
+      if (emailOwner && emailOwner.id !== userId) {
+        return NextResponse.json(
+          { success: false, message: "An account with this email already exists." },
+          { status: 409 }
+        );
+      }
+
+      const updatedUser = updateUser(userId, {
+        name,
+        email,
+        address,
+        department,
+        role,
+        country,
+        state,
+        city,
+      });
+
+      if (!updatedUser) {
+        return NextResponse.json(
+          { success: false, message: "User not found" },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Profile updated successfully.",
+        user: toPublicUser(updatedUser),
+      });
+    }
 
     // Check if email is taken by another user
     const emailOwner = await User.findOne({ email: normalizedEmail });
@@ -133,7 +186,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE() {
   try {
-    await connectDB();
+    const db = await connectDB();
+    const isFallback = !!(db && (db as any).isFallback);
+
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
 
@@ -142,6 +197,23 @@ export async function DELETE() {
         { success: false, message: "Not authenticated" },
         { status: 401 }
       );
+    }
+
+    if (isFallback) {
+      const success = deleteUser(userId);
+      if (!success) {
+        return NextResponse.json(
+          { success: false, message: "User not found" },
+          { status: 404 }
+        );
+      }
+
+      cookieStore.delete("userId");
+
+      return NextResponse.json({
+        success: true,
+        message: "Profile permanently deleted.",
+      });
     }
 
     const deletedUser = await User.findByIdAndDelete(userId);

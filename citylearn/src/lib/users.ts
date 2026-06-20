@@ -8,6 +8,7 @@ export interface StoredUser {
   passwordHash: string;
   passwordSalt: string;
   name: string;
+  address?: string;
   department?: string;
   role?: string;
   country?: string;
@@ -84,6 +85,7 @@ export function createUser(user: Omit<StoredUser, "id" | "createdAt" | "password
     passwordHash: hash,
     passwordSalt: salt,
     name: user.name.trim(),
+    address: user.address,
     department: user.department,
     role: user.role,
     country: user.country,
@@ -102,6 +104,7 @@ export function toPublicUser(user: StoredUser) {
     id: user.id,
     email: user.email,
     name: user.name,
+    address: user.address || "",
     department: user.department,
     role: user.role,
     country: user.country,
@@ -109,4 +112,43 @@ export function toPublicUser(user: StoredUser) {
     city: user.city,
     createdAt: user.createdAt,
   };
+}
+
+export function findUserById(id: string): StoredUser | undefined {
+  return readUsersData().users.find((user) => user.id === id);
+}
+
+export function updateUser(
+  id: string,
+  updates: Partial<Omit<StoredUser, "id" | "createdAt" | "passwordHash" | "passwordSalt">>
+): StoredUser | undefined {
+  const data = readUsersData();
+  const index = data.users.findIndex((user) => user.id === id);
+  if (index === -1) return undefined;
+
+  const user = data.users[index];
+  const updatedUser: StoredUser = {
+    ...user,
+    name: updates.name !== undefined ? updates.name.trim() : user.name,
+    email: updates.email !== undefined ? updates.email.trim().toLowerCase() : user.email,
+    address: updates.address !== undefined ? updates.address : user.address,
+    department: updates.department !== undefined ? updates.department : user.department,
+    role: updates.role !== undefined ? updates.role : user.role,
+    country: updates.country !== undefined ? updates.country : user.country,
+    state: updates.state !== undefined ? updates.state : user.state,
+    city: updates.city !== undefined ? updates.city : user.city,
+  };
+
+  data.users[index] = updatedUser;
+  writeUsersData(data);
+  return updatedUser;
+}
+
+export function deleteUser(id: string): boolean {
+  const data = readUsersData();
+  const initialLength = data.users.length;
+  data.users = data.users.filter((user) => user.id !== id);
+  if (data.users.length === initialLength) return false;
+  writeUsersData(data);
+  return true;
 }
